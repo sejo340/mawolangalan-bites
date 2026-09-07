@@ -3,7 +3,7 @@ import { FaFacebook, FaInstagram, FaWhatsapp, FaPhone, FaEnvelope, FaMapMarkerAl
 import { QRCodeSVG } from 'qrcode.react';
 
 export default function Footer() {
-  // Your live website URL for the QR code
+  // Your live website URL - this makes the QR code work!
   const websiteUrl = "https://mawolangalan-bites.vercel.app";
 
   return (
@@ -57,7 +57,6 @@ export default function Footer() {
           <div className="flex flex-col items-start md:items-end">
             <h4 className="text-lg font-bold mb-4">Scan to Order</h4>
             <div className="bg-white p-3 rounded-xl mb-4">
-              {/* The QR Code - Points to your live Vercel website */}
               <QRCodeSVG 
                 value={websiteUrl} 
                 size={100} 
