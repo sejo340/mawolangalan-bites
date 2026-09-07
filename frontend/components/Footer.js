@@ -3,9 +3,8 @@ import { FaFacebook, FaInstagram, FaWhatsapp, FaPhone, FaEnvelope, FaMapMarkerAl
 import { QRCodeSVG } from 'qrcode.react';
 
 export default function Footer() {
-  // ⚠️ IMPORTANT: Change this URL to your actual website link when you deploy it!
-  // For testing on your phone, you can use your local IP: http://192.168.100.28:3000
-  const websiteUrl = "https://mawolangalanbites.com"; 
+  // Your live website URL for the QR code
+  const websiteUrl = "https://mawolangalan-bites.vercel.app";
 
   return (
     <footer className="bg-brand-dark text-white pt-16 pb-8">
@@ -58,7 +57,7 @@ export default function Footer() {
           <div className="flex flex-col items-start md:items-end">
             <h4 className="text-lg font-bold mb-4">Scan to Order</h4>
             <div className="bg-white p-3 rounded-xl mb-4">
-              {/* The QR Code */}
+              {/* The QR Code - Points to your live Vercel website */}
               <QRCodeSVG 
                 value={websiteUrl} 
                 size={100} 
@@ -67,11 +66,11 @@ export default function Footer() {
                 level="H" 
               />
             </div>
-            <p className="text-gray-400 text-sm text-center md:text-right">
-              Scan this code to visit our shop instantly!
+            <p className="text-gray-400 text-sm text-center md:text-right mb-4">
+              Scan to visit our shop!
             </p>
             
-            <div className="mt-6 space-y-2 text-sm">
+            <div className="space-y-2 text-sm">
               <div className="flex items-center">
                 <FaPhone className="text-brand-gold mr-3" />
                 <span className="text-gray-400">+254 784 437 428</span>
