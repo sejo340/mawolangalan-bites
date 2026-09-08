@@ -2,6 +2,7 @@ import './globals.css';
 import { CartProvider } from '@/components/CartContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import AIAssistant from '@/components/AIAssistant';
 import { Toaster } from 'react-hot-toast';
 
 export const metadata = {
@@ -19,6 +20,7 @@ export default function RootLayout({ children }) {
             {children}
           </main>
           <Footer />
+          <AIAssistant />
           <Toaster position="top-center" />
         </CartProvider>
       </body>
