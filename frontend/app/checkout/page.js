@@ -18,6 +18,9 @@ export default function CheckoutPage() {
   const [deliveryFee, setDeliveryFee] = useState(0);
   const [loading, setLoading] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
+  
+  // NEW: Store the completed order details so we can show them after the cart is cleared
+  const [lastOrder, setLastOrder] = useState(null);
 
   const getLocation = () => {
     if (!navigator.geolocation) {
@@ -70,11 +73,16 @@ export default function CheckoutPage() {
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
       
+      // Format address to be user-friendly instead of raw GPS numbers
+      const friendlyAddress = formData.address.trim() !== '' 
+        ? formData.address 
+        : "Current Location (GPS Detected)";
+
       const orderData = {
         fullName: formData.fullName,
         phone: formData.phone,
         email: formData.email,
-        address: formData.address || `GPS: ${location.lat}, ${location.lng}`,
+        address: friendlyAddress,
         paymentMethod: formData.paymentMethod,
         items: cartItems,
         total: cartTotal + deliveryFee,
@@ -82,9 +90,13 @@ export default function CheckoutPage() {
         location: location
       };
 
+      // 1. Save to database
       await axios.post(`${API_URL}/orders`, orderData);
       
-      // Clear cart and show success screen
+      // 2. Save to local state SO WE CAN SHOW IT ON THE SUCCESS SCREEN
+      setLastOrder(orderData);
+      
+      // 3. NOW it's safe to clear the cart
       clearCart();
       setOrderSuccess(true);
       toast.success('Order saved successfully!');
@@ -97,35 +109,60 @@ export default function CheckoutPage() {
     }
   };
 
-  // Function to generate WhatsApp link
+  // Function to generate WhatsApp link using the SAVED order data
   const sendToWhatsApp = () => {
-    const phoneNumber = "254784437428"; // Your business number
-    const itemsList = cartItems.map(item => `- ${item.name} (x${item.quantity})`).join('%0A');
+    if (!lastOrder) return;
     
+    const phoneNumber = "254784437428"; 
+    
+    // Format items nicely with quantities and prices
+    const itemsList = lastOrder.items.map(item => 
+      `- ${item.name} (x${item.quantity}) = KES ${item.price * item.quantity}`
+    ).join('%0A');
+    
+    const subtotal = lastOrder.total - lastOrder.deliveryFee;
+
     const message = `*NEW ORDER FROM WEBSITE* %0A%0A` +
-      `*Name:* ${formData.fullName}%0A` +
-      `*Phone:* ${formData.phone}%0A` +
-      `*Email:* ${formData.email}%0A` +
-      `*Address:* ${formData.address || `GPS: ${location?.lat}, ${location?.lng}`}%0A%0A` +
+      `*Name:* ${lastOrder.fullName}%0A` +
+      `*Phone:* ${lastOrder.phone}%0A` +
+      `*Email:* ${lastOrder.email}%0A` +
+      `*Address:* ${lastOrder.address}%0A%0A` +
       `*Order Details:*%0A${itemsList}%0A%0A` +
-      `*Subtotal:* KES ${cartTotal}%0A` +
-      `*Delivery Fee:* KES ${deliveryFee}%0A` +
-      `*TOTAL:* KES ${cartTotal + deliveryFee}%0A%0A` +
-      `*Payment Method:* ${formData.paymentMethod === 'mpesa' ? 'M-Pesa' : 'Cash on Delivery'}`;
+      `*Subtotal:* KES ${subtotal}%0A` +
+      `*Delivery Fee:* KES ${lastOrder.deliveryFee}%0A` +
+      `*TOTAL:* KES ${lastOrder.total}%0A%0A` +
+      `*Payment Method:* ${lastOrder.paymentMethod === 'mpesa' ? 'M-Pesa' : 'Cash on Delivery'}`;
 
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
     window.open(whatsappUrl, '_blank');
   };
 
   // SUCCESS SCREEN
-  if (orderSuccess) {
+  if (orderSuccess && lastOrder) {
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center px-4 text-center bg-brand-cream">
         <FaCheckCircle className="text-6xl text-brand-green mb-6" />
         <h1 className="text-3xl md:text-4xl font-bold text-brand-brown mb-4">Order Placed Successfully!</h1>
-        <p className="text-gray-600 mb-8 max-w-md">
-          Thank you, {formData.fullName}! To confirm your delivery and track your order, please send the details to our WhatsApp.
+        <p className="text-gray-600 mb-6 max-w-md">
+          Thank you, {lastOrder.fullName}! To confirm your delivery and track your order, please send the details below to our WhatsApp.
         </p>
+        
+        {/* Order Summary Preview */}
+        <div className="bg-white p-6 rounded-xl shadow-md mb-6 max-w-md w-full text-left">
+          <h3 className="font-bold text-brand-brown mb-3 border-b pb-2">Order Summary:</h3>
+          <ul className="space-y-2 mb-4">
+            {lastOrder.items.map((item, index) => (
+              <li key={index} className="flex justify-between text-sm text-gray-700">
+                <span>{item.name} (x{item.quantity})</span>
+                <span>KES {item.price * item.quantity}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="flex justify-between font-bold text-brand-brown border-t pt-2">
+            <span>Total</span>
+            <span className="text-brand-green">KES {lastOrder.total}</span>
+          </div>
+        </div>
         
         <button 
           onClick={sendToWhatsApp}
@@ -142,7 +179,7 @@ export default function CheckoutPage() {
   }
 
   // CHECKOUT FORM
-  if (cartItems.length === 0) {
+  if (cartItems.length === 0 && !orderSuccess) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center px-4 text-center">
         <h1 className="text-3xl font-bold text-brand-brown mb-4">Your cart is empty</h1>
@@ -174,7 +211,14 @@ export default function CheckoutPage() {
             </div>
             <div>
               <label className="block text-sm font-semibold text-brand-brown mb-2">Delivery Address {location ? '(Optional)' : '*'}</label>
-              <textarea required={!location} value={formData.address} onChange={(e) => setFormData({...formData, address: e.target.value})} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent" rows="3" />
+              <textarea 
+                required={!location} 
+                placeholder={location ? "Add estate name or extra instructions (optional)" : "Enter your full delivery address"}
+                value={formData.address} 
+                onChange={(e) => setFormData({...formData, address: e.target.value})} 
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent" 
+                rows="3" 
+              />
             </div>
             <div>
               <label className="block text-sm font-semibold text-brand-brown mb-2">Delivery Location</label>
@@ -188,7 +232,7 @@ export default function CheckoutPage() {
               <div className="space-y-2">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input type="radio" name="paymentMethod" value="mpesa" checked={formData.paymentMethod === 'mpesa'} onChange={(e) => setFormData({...formData, paymentMethod: e.target.value})} />
-                  <span>M-Pesa (STK Push)</span>
+                  <span>M-Pesa</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input type="radio" name="paymentMethod" value="cod" checked={formData.paymentMethod === 'cod'} onChange={(e) => setFormData({...formData, paymentMethod: e.target.value})} />
