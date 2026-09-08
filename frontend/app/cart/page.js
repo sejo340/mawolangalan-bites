@@ -27,11 +27,9 @@ export default function CartPage() {
         </h1>
 
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-          {/* Cart Items */}
           <div className="divide-y divide-gray-100">
             {cartItems.map((item) => (
               <div key={item._id} className="p-4 md:p-6 flex flex-col md:flex-row items-center gap-4 md:gap-6">
-                {/* Image */}
                 <div className="w-full md:w-24 h-48 md:h-24 flex-shrink-0">
                   <img 
                     src={item.image || 'https://images.unsplash.com/photo-1499636136210-6f4391b5e86c?w=200&h=200&fit=crop'} 
@@ -40,13 +38,11 @@ export default function CartPage() {
                   />
                 </div>
 
-                {/* Details */}
                 <div className="flex-grow text-center md:text-left w-full">
                   <h3 className="font-bold text-lg text-brand-brown">{item.name}</h3>
                   <p className="text-brand-green font-semibold mt-1">KES {item.price}</p>
                 </div>
 
-                {/* Quantity Controls */}
                 <div className="flex items-center gap-3 bg-gray-100 rounded-lg p-2">
                   <button 
                     onClick={() => updateQuantity(item._id, item.quantity - 1)}
@@ -63,7 +59,6 @@ export default function CartPage() {
                   </button>
                 </div>
 
-                {/* Remove Button */}
                 <button 
                   onClick={() => removeFromCart(item._id)}
                   className="text-red-500 hover:text-red-700 transition p-2"
@@ -74,7 +69,6 @@ export default function CartPage() {
             ))}
           </div>
 
-          {/* Summary Section */}
           <div className="bg-brand-cream p-6 md:p-8 border-t border-gray-200">
             <div className="flex justify-between items-center mb-6">
               <span className="text-lg font-semibold text-brand-brown">Subtotal</span>

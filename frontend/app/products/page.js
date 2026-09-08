@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
 import { useCart } from '@/components/CartContext';
-import { FaShoppingCart, FaFilter } from 'react-icons/fa';
+import { FaShoppingCart } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 
 export default function ProductsPage() {
@@ -58,7 +58,6 @@ export default function ProductsPage() {
           Our Products
         </h1>
 
-        {/* Category Filter - Mobile Optimized */}
         <div className="mb-6 md:mb-8 overflow-x-auto pb-2">
           <div className="flex gap-2 md:gap-4 min-w-max justify-start md:justify-center">
             {categories.map((cat) => (
@@ -77,7 +76,6 @@ export default function ProductsPage() {
           </div>
         </div>
 
-        {/* Products Grid - Mobile Responsive */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
           {filteredProducts.map((product) => (
             <div key={product._id} className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition">

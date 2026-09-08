@@ -6,7 +6,6 @@ const CartContext = createContext();
 export function CartProvider({ children }) {
   const [cartItems, setCartItems] = useState([]);
 
-  // Load cart from local storage when page loads
   useEffect(() => {
     const savedCart = localStorage.getItem('mawolangalan_cart');
     if (savedCart) {
@@ -14,7 +13,6 @@ export function CartProvider({ children }) {
     }
   }, []);
 
-  // Save cart to local storage whenever it changes
   useEffect(() => {
     localStorage.setItem('mawolangalan_cart', JSON.stringify(cartItems));
   }, [cartItems]);

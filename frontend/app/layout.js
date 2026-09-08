@@ -1,29 +1,27 @@
-import { Inter, Playfair_Display } from 'next/font/google'
-import './globals.css'
-import Navbar from '@/components/Navbar'
-import Footer from '@/components/Footer'
-import { CartProvider } from '@/components/CartContext'
-import { Toaster } from 'react-hot-toast'
-
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
-const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfair' })
+import './globals.css';
+import { CartProvider } from '@/components/CartContext';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import { Toaster } from 'react-hot-toast';
 
 export const metadata = {
-  title: 'Mawolangalan Bites - Artisan Bakery',
-  description: 'Delicious handmade cookies, custom cakes, and premium baked goods in Kenya.',
-}
+  title: 'Mawolangalan Bites',
+  description: 'Artisan cookies and baked goods in Kenya',
+};
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${playfair.variable} font-body bg-brand-cream`}>
+      <body className="bg-brand-cream text-brand-brown min-h-screen flex flex-col">
         <CartProvider>
           <Navbar />
-          <main className="min-h-screen">{children}</main>
+          <main className="flex-grow">
+            {children}
+          </main>
           <Footer />
-          <Toaster position="top-right" />
+          <Toaster position="top-center" />
         </CartProvider>
       </body>
     </html>
-  )
+  );
 }
