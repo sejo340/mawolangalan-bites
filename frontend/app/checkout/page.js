@@ -3,7 +3,14 @@ import { useState } from 'react';
 import { useCart } from '@/components/CartContext';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { FaMapMarkerAlt, FaWhatsapp, FaCheckCircle, FaSpinner } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaWhatsapp, FaCheckCircle, FaSpinner, FaMobileAlt } from 'react-icons/fa';
+
+// ==========================================
+// CLIENT PAYMENT DETAILS (UPDATE THESE!)
+// ==========================================
+const CLIENT_TILL_NUMBER = "123456"; // <-- CHANGE THIS to the client's actual Till Number
+const CLIENT_BUSINESS_NAME = "MAWOLANGALAN BITES"; // <-- CHANGE THIS to the name on the Till
+// ==========================================
 
 export default function CheckoutPage() {
   const { cartItems, cartTotal, clearCart } = useCart();
@@ -11,7 +18,7 @@ export default function CheckoutPage() {
     fullName: '',
     phone: '',
     address: '',
-    paymentMethod: 'mpesa'
+    paymentMethod: 'mpesa' 
   });
   const [location, setLocation] = useState(null);
   const [deliveryFee, setDeliveryFee] = useState(0);
@@ -40,7 +47,6 @@ export default function CheckoutPage() {
         setLocation({ lat: latitude, lng: longitude, distance: distance.toFixed(2) });
         setDeliveryFee(fee);
 
-        // REVERSE GEOCODING: Get actual place name from coordinates
         try {
           const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`, {
             headers: { 'User-Agent': 'MawolangalanBites/1.0' }
@@ -48,7 +54,6 @@ export default function CheckoutPage() {
           const data = await response.json();
           
           if (data && data.address) {
-            // Build a clean, readable address (e.g., "Kasarani Stadium, Nairobi")
             const addr = data.address;
             const readableAddress = [
               addr.road,
@@ -61,7 +66,6 @@ export default function CheckoutPage() {
             setFormData(prev => ({ ...prev, address: "Current Location (GPS Detected)" }));
           }
         } catch (error) {
-          console.error("Reverse geocoding failed", error);
           setFormData(prev => ({ ...prev, address: "Current Location (GPS Detected)" }));
         }
 
@@ -138,6 +142,10 @@ export default function CheckoutPage() {
     
     const subtotal = lastOrder.total - lastOrder.deliveryFee;
 
+    let paymentText = 'Cash on Delivery';
+    if (lastOrder.paymentMethod === 'mpesa') paymentText = 'M-Pesa (STK Push)';
+    if (lastOrder.paymentMethod === 'till') paymentText = `M-Pesa Till (${CLIENT_TILL_NUMBER})`;
+
     const message = `*NEW ORDER FROM WEBSITE* %0A%0A` +
       `*Name:* ${lastOrder.fullName}%0A` +
       `*Phone:* ${lastOrder.phone}%0A` +
@@ -146,13 +154,12 @@ export default function CheckoutPage() {
       `*Subtotal:* KES ${subtotal}%0A` +
       `*Delivery Fee:* KES ${lastOrder.deliveryFee}%0A` +
       `*TOTAL:* KES ${lastOrder.total}%0A%0A` +
-      `*Payment Method:* ${lastOrder.paymentMethod === 'mpesa' ? 'M-Pesa' : 'Cash on Delivery'}`;
+      `*Payment Method:* ${paymentText}`;
 
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
     window.open(whatsappUrl, '_blank');
   };
 
-  // SUCCESS SCREEN
   if (orderSuccess && lastOrder) {
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center px-4 text-center bg-brand-cream">
@@ -192,7 +199,6 @@ export default function CheckoutPage() {
     );
   }
 
-  // CHECKOUT FORM
   if (cartItems.length === 0 && !orderSuccess) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center px-4 text-center">
@@ -213,27 +219,12 @@ export default function CheckoutPage() {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-semibold text-brand-brown mb-2">Full Name *</label>
-              <input 
-                type="text" 
-                required 
-                value={formData.fullName} 
-                onChange={(e) => setFormData({...formData, fullName: e.target.value})} 
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent" 
-              />
+              <input type="text" required value={formData.fullName} onChange={(e) => setFormData({...formData, fullName: e.target.value})} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent" />
             </div>
             <div>
               <label className="block text-sm font-semibold text-brand-brown mb-2">Phone Number *</label>
-              <input 
-                type="tel" 
-                required 
-                placeholder="0700 000 000" 
-                value={formData.phone} 
-                onChange={(e) => setFormData({...formData, phone: e.target.value})} 
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent" 
-              />
+              <input type="tel" required placeholder="0700 000 000" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent" />
             </div>
-            
-            {/* REMOVED EMAIL FIELD */}
 
             <div>
               <label className="block text-sm font-semibold text-brand-brown mb-2">Delivery Address *</label>
@@ -262,16 +253,37 @@ export default function CheckoutPage() {
               </button>
               {location && <p className="text-sm text-brand-green mt-2 font-semibold">✓ Distance: {location.distance} km | Fee: KES {deliveryFee}</p>}
             </div>
+            
             <div>
               <label className="block text-sm font-semibold text-brand-brown mb-2">Payment Method *</label>
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" name="paymentMethod" value="mpesa" checked={formData.paymentMethod === 'mpesa'} onChange={(e) => setFormData({...formData, paymentMethod: e.target.value})} />
-                  <span>M-Pesa</span>
+              <div className="space-y-3">
+                <label className="flex items-center gap-3 cursor-pointer p-3 border rounded-lg hover:bg-gray-50">
+                  <input type="radio" name="paymentMethod" value="mpesa" checked={formData.paymentMethod === 'mpesa'} onChange={(e) => setFormData({...formData, paymentMethod: e.target.value})} className="w-4 h-4 text-brand-green" />
+                  <span className="font-medium">M-Pesa (STK Push)</span>
                 </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" name="paymentMethod" value="cod" checked={formData.paymentMethod === 'cod'} onChange={(e) => setFormData({...formData, paymentMethod: e.target.value})} />
-                  <span>Cash on Delivery</span>
+                
+                <label className="flex items-center gap-3 cursor-pointer p-3 border rounded-lg hover:bg-gray-50">
+                  <input type="radio" name="paymentMethod" value="till" checked={formData.paymentMethod === 'till'} onChange={(e) => setFormData({...formData, paymentMethod: e.target.value})} className="w-4 h-4 text-brand-green" />
+                  <span className="font-medium">M-Pesa Till Number</span>
+                </label>
+                
+                {formData.paymentMethod === 'till' && (
+                  <div className="bg-yellow-50 border-2 border-yellow-200 p-4 rounded-lg ml-7">
+                    <div className="flex items-center gap-2 mb-2">
+                      <FaMobileAlt className="text-brand-green text-xl" />
+                      <p className="font-bold text-brand-brown">Lipa Na M-Pesa</p>
+                    </div>
+                    <p className="text-sm text-gray-700 mb-1">Buy Goods and Services</p>
+                    
+                    <p className="text-2xl font-bold text-brand-green my-2 tracking-wider">Till Number: {CLIENT_TILL_NUMBER}</p>
+                    
+                    <p className="text-xs text-gray-500">Business Name: {CLIENT_BUSINESS_NAME}</p>
+                  </div>
+                )}
+
+                <label className="flex items-center gap-3 cursor-pointer p-3 border rounded-lg hover:bg-gray-50">
+                  <input type="radio" name="paymentMethod" value="cod" checked={formData.paymentMethod === 'cod'} onChange={(e) => setFormData({...formData, paymentMethod: e.target.value})} className="w-4 h-4 text-brand-green" />
+                  <span className="font-medium">Cash on Delivery</span>
                 </label>
               </div>
             </div>
