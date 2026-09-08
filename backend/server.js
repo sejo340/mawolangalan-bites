@@ -1,50 +1,69 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const cors = require('cors');
-const dotenv = require('dotenv');
-const connectDB = require('./config/database');
-
-// Load env vars
-dotenv.config();
-
-// Connect to database
-connectDB();
+require('dotenv').config();
 
 const app = express();
+const PORT = process.env.PORT || 5000;
+
+// CORS Configuration - FIXED to allow Vercel
+app.use(cors({
+  origin: ['http://localhost:3000', 'https://mawolangalan-bites.vercel.app', 'https://mawolangalan-bites-l6tz.vercel.app'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 // Middleware
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true
-}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Routes
-app.use('/api/products', require('./routes/productRoutes'));
-app.use('/api/orders', require('./routes/orderRoutes'));
-app.use('/api/mpesa', require('./routes/mpesaRoutes'));
+// MongoDB Connection
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/mawolangalan';
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'OK',
-    message: 'Mawolangalan Bites API is running',
-    timestamp: new Date().toISOString()
-  });
+mongoose.connect(MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => {
+  console.log('✅ MongoDB Connected: ' + mongoose.connection.host);
+})
+.catch((err) => {
+  console.error(' Error: ' + err.message);
+  process.exit(1);
 });
 
-// Error handling middleware
+// Routes
+app.get('/api', (req, res) => {
+  res.json({ message: 'Mawolangalan Bites API is running!' });
+});
+
+// Product Routes
+const productRoutes = require('./routes/productRoutes');
+app.use('/api/products', productRoutes);
+
+// Order Routes
+const orderRoutes = require('./routes/orderRoutes');
+app.use('/api/orders', orderRoutes);
+
+// Contact Routes
+const contactRoutes = require('./routes/contactRoutes');
+app.use('/api/contact', contactRoutes);
+
+// Error Handling Middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({
-    error: 'Something went wrong!',
-    message: process.env.NODE_ENV === 'development' ? err.message : undefined
+  res.status(500).json({ 
+    success: false, 
+    message: 'Something went wrong!',
+    error: err.message 
   });
 });
 
-const PORT = process.env.PORT || 5000;
-
+// Start Server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📍 API available at http://localhost:${PORT}/api`);
 });
+
+module.exports = app;
