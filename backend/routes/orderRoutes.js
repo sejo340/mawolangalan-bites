@@ -2,11 +2,11 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 
-// Simple Order Schema (in case you don't have a separate model file)
+// Order Schema (Email is now OPTIONAL)
 const orderSchema = new mongoose.Schema({
   fullName: { type: String, required: true },
   phone: { type: String, required: true },
-  email: { type: String, required: true },
+  email: { type: String, required: false }, // <-- Changed to false
   address: { type: String, required: true },
   paymentMethod: { type: String, required: true },
   items: [{
@@ -35,7 +35,7 @@ router.post('/', async (req, res) => {
     const newOrder = new Order({
       fullName: req.body.fullName,
       phone: req.body.phone,
-      email: req.body.email,
+      email: req.body.email || 'Not provided', // Fallback if empty
       address: req.body.address,
       paymentMethod: req.body.paymentMethod,
       items: req.body.items.map(item => ({
@@ -50,7 +50,7 @@ router.post('/', async (req, res) => {
     });
 
     const savedOrder = await newOrder.save();
-    console.log("Order saved successfully:", savedOrder._id);
+    console.log("✅ Order saved successfully:", savedOrder._id);
     
     res.status(201).json({ 
       success: true, 
@@ -58,16 +58,16 @@ router.post('/', async (req, res) => {
       orderId: savedOrder._id 
     });
   } catch (error) {
-    console.error("Error saving order:", error);
+    console.error("❌ Error saving order:", error);
     res.status(500).json({ 
       success: false, 
-      message: 'Failed to place order',
+      message: 'Failed to place order: ' + error.message,
       error: error.message 
     });
   }
 });
 
-// GET /api/orders (Optional: for you to view orders later)
+// GET /api/orders (For you to view orders later)
 router.get('/', async (req, res) => {
   try {
     const orders = await Order.find().sort({ createdAt: -1 });
