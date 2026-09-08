@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useCart } from '@/components/CartContext';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { FaMapMarkerAlt } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaWhatsapp, FaCheckCircle } from 'react-icons/fa';
 
 export default function CheckoutPage() {
   const { cartItems, cartTotal, clearCart } = useCart();
@@ -17,6 +17,7 @@ export default function CheckoutPage() {
   const [location, setLocation] = useState(null);
   const [deliveryFee, setDeliveryFee] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [orderSuccess, setOrderSuccess] = useState(false);
 
   const getLocation = () => {
     if (!navigator.geolocation) {
@@ -28,13 +29,10 @@ export default function CheckoutPage() {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
-        
-        // Calculate distance from bakery (Nairobi coordinates as example)
         const bakeryLat = -1.2921;
         const bakeryLng = 36.8219;
-        
         const distance = calculateDistance(latitude, longitude, bakeryLat, bakeryLng);
-        const fee = Math.max(100, Math.ceil(distance) * 50); // Min KES 100, or KES 50 per km
+        const fee = Math.max(100, Math.ceil(distance) * 50); 
         
         setLocation({ lat: latitude, lng: longitude, distance: distance.toFixed(2) });
         setDeliveryFee(fee);
@@ -49,7 +47,7 @@ export default function CheckoutPage() {
   };
 
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371; // Radius of the earth in km
+    const R = 6371; 
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
@@ -62,7 +60,6 @@ export default function CheckoutPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validation: Must have either address OR location
     if (!formData.address && !location) {
       toast.error('Please provide a delivery address or use your current location.');
       return;
@@ -85,25 +82,66 @@ export default function CheckoutPage() {
         location: location
       };
 
-      console.log("Sending order data:", orderData); // Helps us debug!
-
-      const response = await axios.post(`${API_URL}/orders`, orderData);
+      await axios.post(`${API_URL}/orders`, orderData);
       
-      toast.success('Order placed successfully! We will contact you shortly.');
+      // Clear cart and show success screen
       clearCart();
-      
-      // Optional: redirect to a success page or home
-      // window.location.href = '/';
+      setOrderSuccess(true);
+      toast.success('Order saved successfully!');
       
     } catch (error) {
-      console.error("Order placement failed:", error.response?.data || error.message);
-      const errorMsg = error.response?.data?.message || 'Failed to place order. Please check your connection and try again.';
-      toast.error(errorMsg);
+      console.error("Order placement failed:", error);
+      toast.error('Failed to place order. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
+  // Function to generate WhatsApp link
+  const sendToWhatsApp = () => {
+    const phoneNumber = "254784437428"; // Your business number
+    const itemsList = cartItems.map(item => `- ${item.name} (x${item.quantity})`).join('%0A');
+    
+    const message = `*NEW ORDER FROM WEBSITE* %0A%0A` +
+      `*Name:* ${formData.fullName}%0A` +
+      `*Phone:* ${formData.phone}%0A` +
+      `*Email:* ${formData.email}%0A` +
+      `*Address:* ${formData.address || `GPS: ${location?.lat}, ${location?.lng}`}%0A%0A` +
+      `*Order Details:*%0A${itemsList}%0A%0A` +
+      `*Subtotal:* KES ${cartTotal}%0A` +
+      `*Delivery Fee:* KES ${deliveryFee}%0A` +
+      `*TOTAL:* KES ${cartTotal + deliveryFee}%0A%0A` +
+      `*Payment Method:* ${formData.paymentMethod === 'mpesa' ? 'M-Pesa' : 'Cash on Delivery'}`;
+
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
+  // SUCCESS SCREEN
+  if (orderSuccess) {
+    return (
+      <div className="min-h-[80vh] flex flex-col items-center justify-center px-4 text-center bg-brand-cream">
+        <FaCheckCircle className="text-6xl text-brand-green mb-6" />
+        <h1 className="text-3xl md:text-4xl font-bold text-brand-brown mb-4">Order Placed Successfully!</h1>
+        <p className="text-gray-600 mb-8 max-w-md">
+          Thank you, {formData.fullName}! To confirm your delivery and track your order, please send the details to our WhatsApp.
+        </p>
+        
+        <button 
+          onClick={sendToWhatsApp}
+          className="bg-green-500 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-green-600 transition shadow-lg flex items-center gap-3 mb-6"
+        >
+          <FaWhatsapp className="text-2xl" /> Send Order to WhatsApp
+        </button>
+        
+        <a href="/" className="text-brand-brown underline hover:text-brand-green">
+          Return to Home
+        </a>
+      </div>
+    );
+  }
+
+  // CHECKOUT FORM
   if (cartItems.length === 0) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center px-4 text-center">
@@ -118,97 +156,42 @@ export default function CheckoutPage() {
   return (
     <div className="min-h-screen bg-brand-cream py-8 md:py-12 px-4">
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl md:text-4xl font-heading font-bold text-brand-brown mb-8 text-center">
-          Checkout
-        </h1>
+        <h1 className="text-3xl md:text-4xl font-heading font-bold text-brand-brown mb-8 text-center">Checkout</h1>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-lg p-6 md:p-8">
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-semibold text-brand-brown mb-2">Full Name *</label>
-              <input
-                type="text"
-                required
-                value={formData.fullName}
-                onChange={(e) => setFormData({...formData, fullName: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent"
-              />
+              <input type="text" required value={formData.fullName} onChange={(e) => setFormData({...formData, fullName: e.target.value})} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent" />
             </div>
-
             <div>
               <label className="block text-sm font-semibold text-brand-brown mb-2">Phone Number *</label>
-              <input
-                type="tel"
-                required
-                placeholder="0700 000 000"
-                value={formData.phone}
-                onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent"
-              />
+              <input type="tel" required placeholder="0700 000 000" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent" />
             </div>
-
             <div>
               <label className="block text-sm font-semibold text-brand-brown mb-2">Email *</label>
-              <input
-                type="email"
-                required
-                value={formData.email}
-                onChange={(e) => setFormData({...formData, email: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent"
-              />
+              <input type="email" required value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent" />
             </div>
-
             <div>
-              <label className="block text-sm font-semibold text-brand-brown mb-2">
-                Delivery Address {location ? '(Optional - Location Detected)' : '*'}
-              </label>
-              <textarea
-                required={!location} // <-- THIS MAKES IT OPTIONAL IF LOCATION IS USED
-                placeholder={location ? "Add any extra delivery instructions (optional)" : "Enter your full delivery address"}
-                value={formData.address}
-                onChange={(e) => setFormData({...formData, address: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent"
-                rows="3"
-              />
+              <label className="block text-sm font-semibold text-brand-brown mb-2">Delivery Address {location ? '(Optional)' : '*'}</label>
+              <textarea required={!location} value={formData.address} onChange={(e) => setFormData({...formData, address: e.target.value})} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent" rows="3" />
             </div>
-
             <div>
               <label className="block text-sm font-semibold text-brand-brown mb-2">Delivery Location</label>
-              <button
-                type="button"
-                onClick={getLocation}
-                className="w-full bg-brand-gold text-white py-3 rounded-lg font-semibold hover:bg-yellow-600 transition flex items-center justify-center gap-2"
-              >
-                <FaMapMarkerAlt /> {location ? 'Update My Current Location' : 'Use My Current Location'}
+              <button type="button" onClick={getLocation} className="w-full bg-brand-gold text-white py-3 rounded-lg font-semibold hover:bg-yellow-600 transition flex items-center justify-center gap-2">
+                <FaMapMarkerAlt /> {location ? 'Update Location' : 'Use My Current Location'}
               </button>
-              {location && (
-                <p className="text-sm text-brand-green mt-2 font-semibold">
-                  ✓ Location detected! Distance: {location.distance} km | Delivery Fee: KES {deliveryFee}
-                </p>
-              )}
+              {location && <p className="text-sm text-brand-green mt-2 font-semibold">✓ Distance: {location.distance} km | Fee: KES {deliveryFee}</p>}
             </div>
-
             <div>
               <label className="block text-sm font-semibold text-brand-brown mb-2">Payment Method *</label>
               <div className="space-y-2">
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="mpesa"
-                    checked={formData.paymentMethod === 'mpesa'}
-                    onChange={(e) => setFormData({...formData, paymentMethod: e.target.value})}
-                  />
+                  <input type="radio" name="paymentMethod" value="mpesa" checked={formData.paymentMethod === 'mpesa'} onChange={(e) => setFormData({...formData, paymentMethod: e.target.value})} />
                   <span>M-Pesa (STK Push)</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="cod"
-                    checked={formData.paymentMethod === 'cod'}
-                    onChange={(e) => setFormData({...formData, paymentMethod: e.target.value})}
-                  />
+                  <input type="radio" name="paymentMethod" value="cod" checked={formData.paymentMethod === 'cod'} onChange={(e) => setFormData({...formData, paymentMethod: e.target.value})} />
                   <span>Cash on Delivery</span>
                 </label>
               </div>
@@ -216,26 +199,13 @@ export default function CheckoutPage() {
           </div>
 
           <div className="mt-6 p-4 bg-brand-cream rounded-lg">
-            <div className="flex justify-between mb-2">
-              <span>Subtotal</span>
-              <span>KES {cartTotal.toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between mb-2">
-              <span>Delivery Fee</span>
-              <span>KES {deliveryFee.toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between font-bold text-lg border-t border-gray-300 pt-2 mt-2">
-              <span>Total</span>
-              <span className="text-brand-green">KES {(cartTotal + deliveryFee).toLocaleString()}</span>
-            </div>
+            <div className="flex justify-between mb-2"><span>Subtotal</span><span>KES {cartTotal.toLocaleString()}</span></div>
+            <div className="flex justify-between mb-2"><span>Delivery Fee</span><span>KES {deliveryFee.toLocaleString()}</span></div>
+            <div className="flex justify-between font-bold text-lg border-t border-gray-300 pt-2 mt-2"><span>Total</span><span className="text-brand-green">KES {(cartTotal + deliveryFee).toLocaleString()}</span></div>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-brand-green text-white py-4 rounded-lg font-bold text-lg hover:bg-green-700 transition mt-6 disabled:bg-gray-400 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Processing Order...' : 'Place Order'}
+          <button type="submit" disabled={loading} className="w-full bg-brand-green text-white py-4 rounded-lg font-bold text-lg hover:bg-green-700 transition mt-6 disabled:bg-gray-400">
+            {loading ? 'Processing...' : 'Place Order'}
           </button>
         </form>
       </div>
