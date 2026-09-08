@@ -1,108 +1,183 @@
 import Link from 'next/link';
-import { FaCookieBite, FaShoppingCart, FaHeart, FaStar } from 'react-icons/fa';
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-brand-cream">
+    <div style={{ minHeight: '100vh', backgroundColor: '#FFF8E1', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       {/* Hero Section */}
-      <section className="bg-brand-cream py-12 md:py-20">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-8 items-center">
-            <div className="text-center md:text-left">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-heading font-bold text-brand-brown mb-4 md:mb-6 leading-tight">
-                Crafting Delicious <br />
-                <span className="text-brand-green">Memories</span> One Bite at a Time
-              </h1>
-              <p className="text-gray-600 mb-6 md:mb-8 text-base md:text-lg px-4 md:px-0">
-                Artisan cookies, custom cakes, and premium baked goods made with love and the finest ingredients in Kenya.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-                <Link href="/products" className="bg-brand-green text-white px-8 py-4 rounded-lg font-semibold hover:bg-green-700 transition text-center shadow-lg">
-                  Order Now
-                </Link>
-                <Link href="/contact" className="bg-brand-brown text-white px-8 py-4 rounded-lg font-semibold hover:bg-brand-dark transition text-center shadow-lg">
-                  Custom Order
-                </Link>
-              </div>
-            </div>
-            <div className="flex justify-center">
-              <img 
-                src="https://images.unsplash.com/photo-1499636136210-6f4391b5e86c?w=600&h=600&fit=crop" 
-                alt="Delicious Cookies" 
-                className="w-full max-w-sm md:max-w-md lg:max-w-lg rounded-2xl shadow-2xl object-cover"
-              />
-            </div>
+      <section style={{ 
+        padding: '80px 20px', 
+        maxWidth: '1400px', 
+        margin: '0 auto',
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: '60px',
+        alignItems: 'center'
+      }}>
+        {/* Left Column - Text */}
+        <div>
+          <h1 style={{ 
+            fontSize: 'clamp(2.5rem, 5vw, 4rem)',
+            fontWeight: 'bold',
+            color: '#3E2723',
+            marginBottom: '24px',
+            lineHeight: '1.1',
+            fontFamily: 'Georgia, serif'
+          }}>
+            Crafting Delicious <br />
+            <span style={{ color: '#4CAF50' }}>Memories</span> One Bite at <br />
+            a Time
+          </h1>
+          
+          <p style={{ 
+            fontSize: '1.125rem',
+            color: '#666',
+            marginBottom: '40px',
+            lineHeight: '1.6',
+            maxWidth: '500px'
+          }}>
+            Artisan cookies, custom cakes, and premium baked goods made with love and the finest ingredients in Kenya.
+          </p>
+          
+          <div style={{ 
+            display: 'flex', 
+            gap: '20px',
+            flexWrap: 'wrap',
+            marginBottom: '60px'
+          }}>
+            <Link href="/products" style={{ 
+              backgroundColor: '#4CAF50',
+              color: 'white',
+              padding: '16px 32px',
+              borderRadius: '8px',
+              textDecoration: 'none',
+              fontWeight: 'bold',
+              fontSize: '1rem',
+              display: 'inline-block',
+              transition: 'all 0.3s ease'
+            }}>
+              Order Now
+            </Link>
+            <Link href="/contact" style={{ 
+              backgroundColor: '#5D4037',
+              color: 'white',
+              padding: '16px 32px',
+              borderRadius: '8px',
+              textDecoration: 'none',
+              fontWeight: 'bold',
+              fontSize: '1rem',
+              display: 'inline-block',
+              transition: 'all 0.3s ease'
+            }}>
+              Custom Order
+            </Link>
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-4 md:gap-8 mt-12 md:mt-20 max-w-4xl mx-auto">
-            <div className="text-center bg-white p-4 rounded-xl shadow-sm">
-              <div className="text-2xl md:text-4xl font-bold text-brand-green mb-2">500+</div>
-              <div className="text-xs md:text-sm text-gray-600 font-semibold">Happy Customers</div>
+          <div style={{ 
+            display: 'flex',
+            gap: '40px',
+            flexWrap: 'wrap'
+          }}>
+            <div>
+              <div style={{ 
+                fontSize: '2rem',
+                fontWeight: 'bold',
+                color: '#3E2723',
+                marginBottom: '4px'
+              }}>
+                500+
+              </div>
+              <div style={{ 
+                fontSize: '0.875rem',
+                color: '#666'
+              }}>
+                Happy Customers
+              </div>
             </div>
-            <div className="text-center bg-white p-4 rounded-xl shadow-sm">
-              <div className="text-2xl md:text-4xl font-bold text-brand-green mb-2">50+</div>
-              <div className="text-xs md:text-sm text-gray-600 font-semibold">Products</div>
+            
+            <div>
+              <div style={{ 
+                fontSize: '2rem',
+                fontWeight: 'bold',
+                color: '#3E2723',
+                marginBottom: '4px'
+              }}>
+                50+
+              </div>
+              <div style={{ 
+                fontSize: '0.875rem',
+                color: '#666'
+              }}>
+                Products
+              </div>
             </div>
-            <div className="text-center bg-white p-4 rounded-xl shadow-sm">
-              <div className="text-2xl md:text-4xl font-bold text-brand-green mb-2">100%</div>
-              <div className="text-xs md:text-sm text-gray-600 font-semibold">Fresh Daily</div>
+            
+            <div>
+              <div style={{ 
+                fontSize: '2rem',
+                fontWeight: 'bold',
+                color: '#3E2723',
+                marginBottom: '4px'
+              }}>
+                100%
+              </div>
+              <div style={{ 
+                fontSize: '0.875rem',
+                color: '#666'
+              }}>
+                Fresh Daily
+              </div>
             </div>
           </div>
+        </div>
+
+        {/* Right Column - Image */}
+        <div style={{ 
+          position: 'relative',
+          borderRadius: '16px',
+          overflow: 'hidden',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+        }}>
+          <img 
+            src="https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=800&h=800&fit=crop" 
+            alt="Delicious Chocolate Chip Cookies" 
+            style={{ 
+              width: '100%',
+              height: 'auto',
+              display: 'block',
+              objectFit: 'cover'
+            }}
+          />
         </div>
       </section>
 
-      {/* Featured Products */}
-      <section className="py-12 md:py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-heading font-bold text-center text-brand-brown mb-4">
-            Our Specialties
-          </h2>
-          <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
-            Discover our most loved treats, baked fresh every single morning.
-          </p>
+      {/* Mobile Responsive Styles */}
+      <style jsx>{`
+        @media (max-width: 968px) {
+          section {
+            grid-template-columns: 1fr !important;
+            padding: 40px 20px !important;
+            gap: 40px !important;
+          }
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-brand-cream rounded-xl p-6 text-center hover:shadow-xl transition duration-300">
-              <div className="bg-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
-                <FaCookieBite className="text-3xl text-brand-gold" />
-              </div>
-              <h3 className="font-bold text-lg mb-2 text-brand-brown">Classic Cookies</h3>
-              <p className="text-sm text-gray-600">Fresh baked daily with premium chocolate.</p>
-            </div>
-            
-            <div className="bg-brand-cream rounded-xl p-6 text-center hover:shadow-xl transition duration-300">
-              <div className="bg-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
-                <FaHeart className="text-3xl text-brand-pink" />
-              </div>
-              <h3 className="font-bold text-lg mb-2 text-brand-brown">Custom Cakes</h3>
-              <p className="text-sm text-gray-600">Made to order for your special occasions.</p>
-            </div>
-            
-            <div className="bg-brand-cream rounded-xl p-6 text-center hover:shadow-xl transition duration-300">
-              <div className="bg-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
-                <FaShoppingCart className="text-3xl text-brand-green" />
-              </div>
-              <h3 className="font-bold text-lg mb-2 text-brand-brown">Bulk Orders</h3>
-              <p className="text-sm text-gray-600">Perfect for events, parties, and offices.</p>
-            </div>
-            
-            <div className="bg-brand-cream rounded-xl p-6 text-center hover:shadow-xl transition duration-300">
-              <div className="bg-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
-                <FaStar className="text-3xl text-brand-brown" />
-              </div>
-              <h3 className="font-bold text-lg mb-2 text-brand-brown">Gourmet Pastries</h3>
-              <p className="text-sm text-gray-600">Flaky, buttery, and absolutely delicious.</p>
-            </div>
-          </div>
+          h1 {
+            text-align: center !important;
+          }
           
-          <div className="text-center mt-12">
-            <Link href="/products" className="inline-block bg-brand-brown text-white px-8 py-4 rounded-lg font-semibold hover:bg-brand-dark transition shadow-lg">
-              View All Products
-            </Link>
-          </div>
-        </div>
-      </section>
+          p {
+            text-align: center !important;
+            margin: 0 auto 40px auto !important;
+          }
+          
+          div[style*="display: 'flex'"][style*="gap: '20px'"] {
+            justify-content: center !important;
+          }
+          
+          div[style*="display: 'flex'"][style*="gap: '40px'"] {
+            justify-content: center !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
