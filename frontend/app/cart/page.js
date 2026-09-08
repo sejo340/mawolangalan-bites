@@ -1,253 +1,108 @@
+'use client';
+import { useCart } from '@/components/CartContext';
 import Link from 'next/link';
+import { FaTrash, FaPlus, FaMinus, FaShoppingBag } from 'react-icons/fa';
 
-export default function HomePage() {
+export default function CartPage() {
+  const { cartItems, removeFromCart, updateQuantity, cartTotal, clearCart } = useCart();
+
+  if (cartItems.length === 0) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center px-4 text-center">
+        <FaShoppingBag className="text-6xl text-gray-300 mb-4" />
+        <h1 className="text-3xl font-bold text-brand-brown mb-2">Your cart is empty</h1>
+        <p className="text-gray-600 mb-8">Looks like you haven't added any treats yet.</p>
+        <Link href="/products" className="bg-brand-green text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-700 transition">
+          Browse Products
+        </Link>
+      </div>
+    );
+  }
+
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      backgroundColor: '#FFF8E1',
-      fontFamily: 'system-ui, -apple-system, sans-serif'
-    }}>
-      {/* Hero Section */}
-      <section style={{ 
-        padding: '60px 20px', 
-        maxWidth: '1200px', 
-        margin: '0 auto'
-      }}>
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-          gap: '40px',
-          alignItems: 'center'
-        }}>
-          <div>
-            <h1 style={{ 
-              fontSize: 'clamp(2rem, 5vw, 3.5rem)',
-              fontWeight: 'bold',
-              color: '#3E2723',
-              marginBottom: '20px',
-              lineHeight: '1.2'
-            }}>
-              Crafting Delicious <br />
-              <span style={{ color: '#4CAF50' }}>Memories</span> One Bite at a Time
-            </h1>
-            <p style={{ 
-              fontSize: '1.125rem',
-              color: '#666',
-              marginBottom: '30px'
-            }}>
-              Artisan cookies, custom cakes, and premium baked goods made with love and the finest ingredients in Kenya.
-            </p>
-            <div style={{ 
-              display: 'flex', 
-              gap: '15px',
-              flexWrap: 'wrap'
-            }}>
-              <Link href="/products" style={{ 
-                backgroundColor: '#4CAF50',
-                color: 'white',
-                padding: '15px 30px',
-                borderRadius: '8px',
-                textDecoration: 'none',
-                fontWeight: 'bold',
-                fontSize: '1rem',
-                display: 'inline-block'
-              }}>
-                Order Now
-              </Link>
-              <Link href="/contact" style={{ 
-                backgroundColor: '#3E2723',
-                color: 'white',
-                padding: '15px 30px',
-                borderRadius: '8px',
-                textDecoration: 'none',
-                fontWeight: 'bold',
-                fontSize: '1rem',
-                display: 'inline-block'
-              }}>
-                Custom Order
-              </Link>
-            </div>
-          </div>
-          <div>
-            <div style={{ 
-              width: '100%',
-              maxWidth: '500px',
-              height: '400px',
-              backgroundColor: '#FFE4C4',
-              borderRadius: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
-              fontSize: '120px',
-              margin: '0 auto'
-            }}>
-              🍪
-            </div>
-            <p style={{ 
-              textAlign: 'center',
-              color: '#666',
-              marginTop: '15px',
-              fontSize: '0.9rem'
-            }}>
-              Delicious Cookies
-            </p>
-          </div>
-        </div>
+    <div className="min-h-screen bg-brand-cream py-8 md:py-12 px-4">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-3xl md:text-4xl font-heading font-bold text-brand-brown mb-8 text-center">
+          Your Cart
+        </h1>
 
-        {/* Stats Section */}
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '30px',
-          marginTop: '80px',
-          maxWidth: '900px',
-          margin: '80px auto 0'
-        }}>
-          <div style={{ 
-            textAlign: 'center',
-            backgroundColor: 'white',
-            padding: '30px',
-            borderRadius: '15px',
-            boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-          }}>
-            <div style={{ 
-              fontSize: '3rem',
-              fontWeight: 'bold',
-              color: '#4CAF50',
-              marginBottom: '10px'
-            }}>
-              500+
-            </div>
-            <div style={{ color: '#666', fontSize: '1rem' }}>
-              Happy Customers
-            </div>
-          </div>
-          
-          <div style={{ 
-            textAlign: 'center',
-            backgroundColor: 'white',
-            padding: '30px',
-            borderRadius: '15px',
-            boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-          }}>
-            <div style={{ 
-              fontSize: '3rem',
-              fontWeight: 'bold',
-              color: '#4CAF50',
-              marginBottom: '10px'
-            }}>
-              50+
-            </div>
-            <div style={{ color: '#666', fontSize: '1rem' }}>
-              Products
-            </div>
-          </div>
-          
-          <div style={{ 
-            textAlign: 'center',
-            backgroundColor: 'white',
-            padding: '30px',
-            borderRadius: '15px',
-            boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-          }}>
-            <div style={{ 
-              fontSize: '3rem',
-              fontWeight: 'bold',
-              color: '#4CAF50',
-              marginBottom: '10px'
-            }}>
-              100%
-            </div>
-            <div style={{ color: '#666', fontSize: '1rem' }}>
-              Fresh Daily
-            </div>
-          </div>
-        </div>
-      </section>
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+          {/* Cart Items */}
+          <div className="divide-y divide-gray-100">
+            {cartItems.map((item) => (
+              <div key={item._id} className="p-4 md:p-6 flex flex-col md:flex-row items-center gap-4 md:gap-6">
+                {/* Image */}
+                <div className="w-full md:w-24 h-48 md:h-24 flex-shrink-0">
+                  <img 
+                    src={item.image || 'https://images.unsplash.com/photo-1499636136210-6f4391b5e86c?w=200&h=200&fit=crop'} 
+                    alt={item.name} 
+                    className="w-full h-full object-cover rounded-lg"
+                  />
+                </div>
 
-      {/* Featured Section */}
-      <section style={{ 
-        padding: '80px 20px',
-        backgroundColor: 'white'
-      }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <h2 style={{ 
-            fontSize: '2.5rem',
-            fontWeight: 'bold',
-            textAlign: 'center',
-            color: '#3E2723',
-            marginBottom: '50px'
-          }}>
-            Our Specialties
-          </h2>
-          
-          <div style={{ 
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-            gap: '30px'
-          }}>
-            <div style={{
-              backgroundColor: '#FFF8E1',
-              padding: '40px 30px',
-              borderRadius: '15px',
-              textAlign: 'center'
-            }}>
-              <div style={{ fontSize: '50px', marginBottom: '20px' }}>🍪</div>
-              <h3 style={{ fontSize: '1.5rem', color: '#3E2723', marginBottom: '10px' }}>Classic Cookies</h3>
-              <p style={{ color: '#666' }}>Fresh baked daily with premium chocolate</p>
-            </div>
-            
-            <div style={{
-              backgroundColor: '#FFF8E1',
-              padding: '40px 30px',
-              borderRadius: '15px',
-              textAlign: 'center'
-            }}>
-              <div style={{ fontSize: '50px', marginBottom: '20px' }}></div>
-              <h3 style={{ fontSize: '1.5rem', color: '#3E2723', marginBottom: '10px' }}>Custom Cakes</h3>
-              <p style={{ color: '#666' }}>Made to order for special occasions</p>
-            </div>
-            
-            <div style={{
-              backgroundColor: '#FFF8E1',
-              padding: '40px 30px',
-              borderRadius: '15px',
-              textAlign: 'center'
-            }}>
-              <div style={{ fontSize: '50px', marginBottom: '20px' }}>🥐</div>
-              <h3 style={{ fontSize: '1.5rem', color: '#3E2723', marginBottom: '10px' }}>Gourmet Pastries</h3>
-              <p style={{ color: '#666' }}>Flaky, buttery, and delicious</p>
-            </div>
-            
-            <div style={{
-              backgroundColor: '#FFF8E1',
-              padding: '40px 30px',
-              borderRadius: '15px',
-              textAlign: 'center'
-            }}>
-              <div style={{ fontSize: '50px', marginBottom: '20px' }}></div>
-              <h3 style={{ fontSize: '1.5rem', color: '#3E2723', marginBottom: '10px' }}>Brownies</h3>
-              <p style={{ color: '#666' }}>Rich, fudgy, and irresistible</p>
-            </div>
+                {/* Details */}
+                <div className="flex-grow text-center md:text-left w-full">
+                  <h3 className="font-bold text-lg text-brand-brown">{item.name}</h3>
+                  <p className="text-brand-green font-semibold mt-1">KES {item.price}</p>
+                </div>
+
+                {/* Quantity Controls */}
+                <div className="flex items-center gap-3 bg-gray-100 rounded-lg p-2">
+                  <button 
+                    onClick={() => updateQuantity(item._id, item.quantity - 1)}
+                    className="w-8 h-8 flex items-center justify-center bg-white rounded shadow hover:bg-gray-50 transition"
+                  >
+                    <FaMinus className="text-xs text-brand-brown" />
+                  </button>
+                  <span className="font-bold text-brand-brown w-6 text-center">{item.quantity}</span>
+                  <button 
+                    onClick={() => updateQuantity(item._id, item.quantity + 1)}
+                    className="w-8 h-8 flex items-center justify-center bg-white rounded shadow hover:bg-gray-50 transition"
+                  >
+                    <FaPlus className="text-xs text-brand-brown" />
+                  </button>
+                </div>
+
+                {/* Remove Button */}
+                <button 
+                  onClick={() => removeFromCart(item._id)}
+                  className="text-red-500 hover:text-red-700 transition p-2"
+                >
+                  <FaTrash />
+                </button>
+              </div>
+            ))}
           </div>
-          
-          <div style={{ textAlign: 'center', marginTop: '50px' }}>
-            <Link href="/products" style={{ 
-              backgroundColor: '#3E2723',
-              color: 'white',
-              padding: '15px 40px',
-              borderRadius: '8px',
-              textDecoration: 'none',
-              fontWeight: 'bold',
-              fontSize: '1.1rem',
-              display: 'inline-block'
-            }}>
-              View All Products
-            </Link>
+
+          {/* Summary Section */}
+          <div className="bg-brand-cream p-6 md:p-8 border-t border-gray-200">
+            <div className="flex justify-between items-center mb-6">
+              <span className="text-lg font-semibold text-brand-brown">Subtotal</span>
+              <span className="text-2xl font-bold text-brand-green">KES {cartTotal.toLocaleString()}</span>
+            </div>
+            
+            <p className="text-sm text-gray-500 mb-6 text-center md:text-left">
+              Shipping and delivery fees calculated at checkout.
+            </p>
+
+            <div className="flex flex-col md:flex-row gap-4">
+              <Link href="/products" className="flex-1 text-center border-2 border-brand-brown text-brand-brown py-3 rounded-lg font-semibold hover:bg-brand-brown hover:text-white transition">
+                Continue Shopping
+              </Link>
+              <Link href="/checkout" className="flex-1 text-center bg-brand-green text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition shadow-lg">
+                Proceed to Checkout
+              </Link>
+            </div>
+            
+            <button 
+              onClick={clearCart}
+              className="w-full mt-4 text-sm text-red-500 hover:text-red-700 transition"
+            >
+              Clear Cart
+            </button>
           </div>
         </div>
-      </section>
+      </div>
     </div>
   );
 }
