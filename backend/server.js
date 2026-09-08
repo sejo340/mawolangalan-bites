@@ -39,16 +39,28 @@ app.get('/api', (req, res) => {
 });
 
 // Product Routes
-const productRoutes = require('./routes/productRoutes');
-app.use('/api/products', productRoutes);
+try {
+  const productRoutes = require('./routes/productRoutes');
+  app.use('/api/products', productRoutes);
+} catch (error) {
+  console.log('⚠️  Product routes not loaded:', error.message);
+}
 
 // Order Routes
-const orderRoutes = require('./routes/orderRoutes');
-app.use('/api/orders', orderRoutes);
+try {
+  const orderRoutes = require('./routes/orderRoutes');
+  app.use('/api/orders', orderRoutes);
+} catch (error) {
+  console.log('⚠️  Order routes not loaded:', error.message);
+}
 
 // Contact Routes
-const contactRoutes = require('./routes/contactRoutes');
-app.use('/api/contact', contactRoutes);
+try {
+  const contactRoutes = require('./routes/contactRoutes');
+  app.use('/api/contact', contactRoutes);
+} catch (error) {
+  console.log('⚠️  Contact routes not loaded:', error.message);
+}
 
 // Error Handling Middleware
 app.use((err, req, res, next) => {
