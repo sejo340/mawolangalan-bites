@@ -3,23 +3,21 @@ import { useState } from 'react';
 import { useCart } from '@/components/CartContext';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { FaMapMarkerAlt, FaWhatsapp, FaCheckCircle } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaWhatsapp, FaCheckCircle, FaSpinner } from 'react-icons/fa';
 
 export default function CheckoutPage() {
   const { cartItems, cartTotal, clearCart } = useCart();
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
-    email: '',
     address: '',
     paymentMethod: 'mpesa'
   });
   const [location, setLocation] = useState(null);
   const [deliveryFee, setDeliveryFee] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [fetchingAddress, setFetchingAddress] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
-  
-  // NEW: Store the completed order details so we can show them after the cart is cleared
   const [lastOrder, setLastOrder] = useState(null);
 
   const getLocation = () => {
@@ -28,7 +26,9 @@ export default function CheckoutPage() {
       return;
     }
 
-    toast.loading('Finding your location...');
+    setFetchingAddress(true);
+    toast.loading('Finding your location and address...');
+    
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
@@ -39,10 +39,38 @@ export default function CheckoutPage() {
         
         setLocation({ lat: latitude, lng: longitude, distance: distance.toFixed(2) });
         setDeliveryFee(fee);
+
+        // REVERSE GEOCODING: Get actual place name from coordinates
+        try {
+          const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`, {
+            headers: { 'User-Agent': 'MawolangalanBites/1.0' }
+          });
+          const data = await response.json();
+          
+          if (data && data.address) {
+            // Build a clean, readable address (e.g., "Kasarani Stadium, Nairobi")
+            const addr = data.address;
+            const readableAddress = [
+              addr.road,
+              addr.suburb || addr.neighbourhood || addr.hamlet,
+              addr.city || addr.town || addr.county || 'Nairobi'
+            ].filter(Boolean).join(', ');
+            
+            setFormData(prev => ({ ...prev, address: readableAddress }));
+          } else {
+            setFormData(prev => ({ ...prev, address: "Current Location (GPS Detected)" }));
+          }
+        } catch (error) {
+          console.error("Reverse geocoding failed", error);
+          setFormData(prev => ({ ...prev, address: "Current Location (GPS Detected)" }));
+        }
+
+        setFetchingAddress(false);
         toast.dismiss();
-        toast.success(`Location found! Distance: ${distance.toFixed(2)} km`);
+        toast.success('Location and address found!');
       },
       (error) => {
+        setFetchingAddress(false);
         toast.dismiss();
         toast.error('Failed to get location. Please enter address manually.');
       }
@@ -63,8 +91,8 @@ export default function CheckoutPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!formData.address && !location) {
-      toast.error('Please provide a delivery address or use your current location.');
+    if (!formData.address.trim()) {
+      toast.error('Please provide a delivery address or use the location button.');
       return;
     }
 
@@ -73,16 +101,10 @@ export default function CheckoutPage() {
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
       
-      // Format address to be user-friendly instead of raw GPS numbers
-      const friendlyAddress = formData.address.trim() !== '' 
-        ? formData.address 
-        : "Current Location (GPS Detected)";
-
       const orderData = {
         fullName: formData.fullName,
         phone: formData.phone,
-        email: formData.email,
-        address: friendlyAddress,
+        address: formData.address,
         paymentMethod: formData.paymentMethod,
         items: cartItems,
         total: cartTotal + deliveryFee,
@@ -90,13 +112,9 @@ export default function CheckoutPage() {
         location: location
       };
 
-      // 1. Save to database
       await axios.post(`${API_URL}/orders`, orderData);
       
-      // 2. Save to local state SO WE CAN SHOW IT ON THE SUCCESS SCREEN
       setLastOrder(orderData);
-      
-      // 3. NOW it's safe to clear the cart
       clearCart();
       setOrderSuccess(true);
       toast.success('Order saved successfully!');
@@ -109,13 +127,11 @@ export default function CheckoutPage() {
     }
   };
 
-  // Function to generate WhatsApp link using the SAVED order data
   const sendToWhatsApp = () => {
     if (!lastOrder) return;
     
     const phoneNumber = "254784437428"; 
     
-    // Format items nicely with quantities and prices
     const itemsList = lastOrder.items.map(item => 
       `- ${item.name} (x${item.quantity}) = KES ${item.price * item.quantity}`
     ).join('%0A');
@@ -125,7 +141,6 @@ export default function CheckoutPage() {
     const message = `*NEW ORDER FROM WEBSITE* %0A%0A` +
       `*Name:* ${lastOrder.fullName}%0A` +
       `*Phone:* ${lastOrder.phone}%0A` +
-      `*Email:* ${lastOrder.email}%0A` +
       `*Address:* ${lastOrder.address}%0A%0A` +
       `*Order Details:*%0A${itemsList}%0A%0A` +
       `*Subtotal:* KES ${subtotal}%0A` +
@@ -147,7 +162,6 @@ export default function CheckoutPage() {
           Thank you, {lastOrder.fullName}! To confirm your delivery and track your order, please send the details below to our WhatsApp.
         </p>
         
-        {/* Order Summary Preview */}
         <div className="bg-white p-6 rounded-xl shadow-md mb-6 max-w-md w-full text-left">
           <h3 className="font-bold text-brand-brown mb-3 border-b pb-2">Order Summary:</h3>
           <ul className="space-y-2 mb-4">
@@ -199,21 +213,33 @@ export default function CheckoutPage() {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-semibold text-brand-brown mb-2">Full Name *</label>
-              <input type="text" required value={formData.fullName} onChange={(e) => setFormData({...formData, fullName: e.target.value})} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent" />
+              <input 
+                type="text" 
+                required 
+                value={formData.fullName} 
+                onChange={(e) => setFormData({...formData, fullName: e.target.value})} 
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent" 
+              />
             </div>
             <div>
               <label className="block text-sm font-semibold text-brand-brown mb-2">Phone Number *</label>
-              <input type="tel" required placeholder="0700 000 000" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent" />
+              <input 
+                type="tel" 
+                required 
+                placeholder="0700 000 000" 
+                value={formData.phone} 
+                onChange={(e) => setFormData({...formData, phone: e.target.value})} 
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent" 
+              />
             </div>
+            
+            {/* REMOVED EMAIL FIELD */}
+
             <div>
-              <label className="block text-sm font-semibold text-brand-brown mb-2">Email *</label>
-              <input type="email" required value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent" />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-brand-brown mb-2">Delivery Address {location ? '(Optional)' : '*'}</label>
+              <label className="block text-sm font-semibold text-brand-brown mb-2">Delivery Address *</label>
               <textarea 
-                required={!location} 
-                placeholder={location ? "Add estate name or extra instructions (optional)" : "Enter your full delivery address"}
+                required 
+                placeholder="e.g., Kasarani Stadium, near the main gate"
                 value={formData.address} 
                 onChange={(e) => setFormData({...formData, address: e.target.value})} 
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent" 
@@ -221,9 +247,18 @@ export default function CheckoutPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-brand-brown mb-2">Delivery Location</label>
-              <button type="button" onClick={getLocation} className="w-full bg-brand-gold text-white py-3 rounded-lg font-semibold hover:bg-yellow-600 transition flex items-center justify-center gap-2">
-                <FaMapMarkerAlt /> {location ? 'Update Location' : 'Use My Current Location'}
+              <label className="block text-sm font-semibold text-brand-brown mb-2">Auto-Fill My Location</label>
+              <button 
+                type="button" 
+                onClick={getLocation} 
+                disabled={fetchingAddress}
+                className="w-full bg-brand-gold text-white py-3 rounded-lg font-semibold hover:bg-yellow-600 transition flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {fetchingAddress ? (
+                  <><FaSpinner className="animate-spin" /> Finding Address...</>
+                ) : (
+                  <><FaMapMarkerAlt /> {location ? 'Update My Location' : 'Use My Current Location'}</>
+                )}
               </button>
               {location && <p className="text-sm text-brand-green mt-2 font-semibold">✓ Distance: {location.distance} km | Fee: KES {deliveryFee}</p>}
             </div>
