@@ -20,36 +20,36 @@ export default function CheckoutPage() {
 
   const getLocation = () => {
     if (!navigator.geolocation) {
-      toast.error('Geolocation is not supported');
+      toast.error('Geolocation is not supported by your browser');
       return;
     }
 
-    toast.loading('Finding location...');
+    toast.loading('Finding your location...');
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
         
-        // Calculate distance from bakery (example coordinates)
+        // Calculate distance from bakery (Nairobi coordinates as example)
         const bakeryLat = -1.2921;
         const bakeryLng = 36.8219;
         
         const distance = calculateDistance(latitude, longitude, bakeryLat, bakeryLng);
-        const fee = Math.ceil(distance) * 50; // KES 50 per km
+        const fee = Math.max(100, Math.ceil(distance) * 50); // Min KES 100, or KES 50 per km
         
-        setLocation({ lat: latitude, lng: longitude });
+        setLocation({ lat: latitude, lng: longitude, distance: distance.toFixed(2) });
         setDeliveryFee(fee);
         toast.dismiss();
         toast.success(`Location found! Distance: ${distance.toFixed(2)} km`);
       },
       (error) => {
         toast.dismiss();
-        toast.error('Failed to get location');
+        toast.error('Failed to get location. Please enter address manually.');
       }
     );
   };
 
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371;
+    const R = 6371; // Radius of the earth in km
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
@@ -61,24 +61,44 @@ export default function CheckoutPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validation: Must have either address OR location
+    if (!formData.address && !location) {
+      toast.error('Please provide a delivery address or use your current location.');
+      return;
+    }
+
     setLoading(true);
 
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
       
       const orderData = {
-        ...formData,
+        fullName: formData.fullName,
+        phone: formData.phone,
+        email: formData.email,
+        address: formData.address || `GPS: ${location.lat}, ${location.lng}`,
+        paymentMethod: formData.paymentMethod,
         items: cartItems,
         total: cartTotal + deliveryFee,
         deliveryFee,
-        location
+        location: location
       };
 
-      await axios.post(`${API_URL}/orders`, orderData);
-      toast.success('Order placed successfully!');
+      console.log("Sending order data:", orderData); // Helps us debug!
+
+      const response = await axios.post(`${API_URL}/orders`, orderData);
+      
+      toast.success('Order placed successfully! We will contact you shortly.');
       clearCart();
+      
+      // Optional: redirect to a success page or home
+      // window.location.href = '/';
+      
     } catch (error) {
-      toast.error('Failed to place order');
+      console.error("Order placement failed:", error.response?.data || error.message);
+      const errorMsg = error.response?.data?.message || 'Failed to place order. Please check your connection and try again.';
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -88,7 +108,7 @@ export default function CheckoutPage() {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center px-4 text-center">
         <h1 className="text-3xl font-bold text-brand-brown mb-4">Your cart is empty</h1>
-        <a href="/products" className="bg-brand-green text-white px-8 py-3 rounded-lg font-semibold">
+        <a href="/products" className="bg-brand-green text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-700 transition">
           Browse Products
         </a>
       </div>
@@ -139,9 +159,12 @@ export default function CheckoutPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-brand-brown mb-2">Delivery Address *</label>
+              <label className="block text-sm font-semibold text-brand-brown mb-2">
+                Delivery Address {location ? '(Optional - Location Detected)' : '*'}
+              </label>
               <textarea
-                required
+                required={!location} // <-- THIS MAKES IT OPTIONAL IF LOCATION IS USED
+                placeholder={location ? "Add any extra delivery instructions (optional)" : "Enter your full delivery address"}
                 value={formData.address}
                 onChange={(e) => setFormData({...formData, address: e.target.value})}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent"
@@ -156,11 +179,11 @@ export default function CheckoutPage() {
                 onClick={getLocation}
                 className="w-full bg-brand-gold text-white py-3 rounded-lg font-semibold hover:bg-yellow-600 transition flex items-center justify-center gap-2"
               >
-                <FaMapMarkerAlt /> Use My Current Location
+                <FaMapMarkerAlt /> {location ? 'Update My Current Location' : 'Use My Current Location'}
               </button>
-              {deliveryFee > 0 && (
-                <p className="text-sm text-gray-600 mt-2">
-                  Distance: {calculateDistance(location?.lat || 0, location?.lng || 0, -1.2921, 36.8219).toFixed(2)} km | Delivery Fee: KES {deliveryFee}
+              {location && (
+                <p className="text-sm text-brand-green mt-2 font-semibold">
+                  ✓ Location detected! Distance: {location.distance} km | Delivery Fee: KES {deliveryFee}
                 </p>
               )}
             </div>
@@ -168,7 +191,7 @@ export default function CheckoutPage() {
             <div>
               <label className="block text-sm font-semibold text-brand-brown mb-2">Payment Method *</label>
               <div className="space-y-2">
-                <label className="flex items-center gap-2">
+                <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="radio"
                     name="paymentMethod"
@@ -178,7 +201,7 @@ export default function CheckoutPage() {
                   />
                   <span>M-Pesa (STK Push)</span>
                 </label>
-                <label className="flex items-center gap-2">
+                <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="radio"
                     name="paymentMethod"
@@ -195,24 +218,24 @@ export default function CheckoutPage() {
           <div className="mt-6 p-4 bg-brand-cream rounded-lg">
             <div className="flex justify-between mb-2">
               <span>Subtotal</span>
-              <span>KES {cartTotal}</span>
+              <span>KES {cartTotal.toLocaleString()}</span>
             </div>
             <div className="flex justify-between mb-2">
               <span>Delivery Fee</span>
-              <span>KES {deliveryFee}</span>
+              <span>KES {deliveryFee.toLocaleString()}</span>
             </div>
-            <div className="flex justify-between font-bold text-lg border-t pt-2">
+            <div className="flex justify-between font-bold text-lg border-t border-gray-300 pt-2 mt-2">
               <span>Total</span>
-              <span className="text-brand-green">KES {cartTotal + deliveryFee}</span>
+              <span className="text-brand-green">KES {(cartTotal + deliveryFee).toLocaleString()}</span>
             </div>
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-brand-green text-white py-4 rounded-lg font-bold text-lg hover:bg-green-700 transition mt-6 disabled:bg-gray-400"
+            className="w-full bg-brand-green text-white py-4 rounded-lg font-bold text-lg hover:bg-green-700 transition mt-6 disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
-            {loading ? 'Processing...' : 'Place Order'}
+            {loading ? 'Processing Order...' : 'Place Order'}
           </button>
         </form>
       </div>
