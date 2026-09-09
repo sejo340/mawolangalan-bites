@@ -1,13 +1,16 @@
 'use client';
 import { FaWhatsapp, FaEnvelope, FaPhone, FaMapMarkerAlt } from 'react-icons/fa';
+import { trackEvent } from '@/utils/analytics'; // <-- Added tracking
 
 export default function ContactPage() {
   const handleWhatsAppClick = () => {
+    trackEvent('contact_whatsapp', { source: 'contact_page' });
     const message = encodeURIComponent("Hello Mawolangalan Bites! I have an inquiry.");
     window.open(`https://wa.me/254784437428?text=${message}`, '_blank');
   };
 
   const handleEmailClick = () => {
+    trackEvent('contact_email', { source: 'contact_page' });
     window.location.href = "mailto:mawolangalanbites@gmail.com?subject=Inquiry from Website";
   };
 

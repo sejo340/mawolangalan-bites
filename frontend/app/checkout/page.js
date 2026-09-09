@@ -4,12 +4,13 @@ import { useCart } from '@/components/CartContext';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { FaMapMarkerAlt, FaWhatsapp, FaCheckCircle, FaSpinner, FaMobileAlt } from 'react-icons/fa';
+import { trackEvent } from '@/utils/analytics'; // <-- Added tracking
 
 // ==========================================
 // CLIENT PAYMENT DETAILS (UPDATE THESE!)
 // ==========================================
-const CLIENT_TILL_NUMBER = "123456"; // <-- CHANGE THIS to the client's actual Till Number
-const CLIENT_BUSINESS_NAME = "MAWOLANGALAN BITES"; // <-- CHANGE THIS to the name on the Till
+const CLIENT_TILL_NUMBER = "123456"; 
+const CLIENT_BUSINESS_NAME = "MAWOLANGALAN BITES"; 
 // ==========================================
 
 export default function CheckoutPage() {
@@ -118,6 +119,14 @@ export default function CheckoutPage() {
 
       await axios.post(`${API_URL}/orders`, orderData);
       
+      // Track successful purchase
+      trackEvent('purchase', {
+        total: orderData.total,
+        items_count: cartItems.length,
+        payment_method: formData.paymentMethod,
+        delivery_fee: deliveryFee
+      });
+
       setLastOrder(orderData);
       clearCart();
       setOrderSuccess(true);

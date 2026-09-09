@@ -2,6 +2,7 @@
 import { useCart } from '@/components/CartContext';
 import Link from 'next/link';
 import { FaTrash, FaPlus, FaMinus, FaShoppingBag } from 'react-icons/fa';
+import { trackEvent } from '@/utils/analytics'; // <-- Added tracking
 
 export default function CartPage() {
   const { cartItems, removeFromCart, updateQuantity, cartTotal, clearCart } = useCart();
@@ -83,13 +84,20 @@ export default function CartPage() {
               <Link href="/products" className="flex-1 text-center border-2 border-brand-brown text-brand-brown py-3 rounded-lg font-semibold hover:bg-brand-brown hover:text-white transition">
                 Continue Shopping
               </Link>
-              <Link href="/checkout" className="flex-1 text-center bg-brand-green text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition shadow-lg">
+              <Link 
+                href="/checkout" 
+                onClick={() => trackEvent('begin_checkout', { total: cartTotal, items_count: cartItems.length })}
+                className="flex-1 text-center bg-brand-green text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition shadow-lg"
+              >
                 Proceed to Checkout
               </Link>
             </div>
             
             <button 
-              onClick={clearCart}
+              onClick={() => {
+                clearCart();
+                trackEvent('clear_cart', { total_cleared: cartTotal });
+              }}
               className="w-full mt-4 text-sm text-red-500 hover:text-red-700 transition"
             >
               Clear Cart

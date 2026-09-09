@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useCart } from '@/components/CartContext';
 import { FaShoppingCart } from 'react-icons/fa';
 import toast from 'react-hot-toast';
+import { trackEvent } from '@/utils/analytics'; // <-- Added tracking
 
 export default function ProductsPage() {
   const [products, setProducts] = useState([]);
@@ -31,6 +32,14 @@ export default function ProductsPage() {
 
   const handleAddToCart = (product) => {
     addToCart(product);
+    
+    // Track the add to cart event
+    trackEvent('add_to_cart', {
+      product_name: product.name,
+      product_price: product.price,
+      product_category: product.category
+    });
+    
     toast.success(`${product.name} added to cart!`);
   };
 
