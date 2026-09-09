@@ -4,13 +4,13 @@ import { useCart } from '@/components/CartContext';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { FaMapMarkerAlt, FaWhatsapp, FaCheckCircle, FaSpinner, FaMobileAlt } from 'react-icons/fa';
-import { trackEvent } from '@/utils/analytics'; // <-- Added tracking
+import { trackEvent } from '@/utils/analytics';
 
 // ==========================================
 // CLIENT PAYMENT DETAILS (UPDATE THESE!)
 // ==========================================
-const CLIENT_TILL_NUMBER = "1696232"; 
-const CLIENT_BUSINESS_NAME = "MAWOLANGALAN BITES"; 
+const CLIENT_TILL_NUMBER = "1696232";
+const CLIENT_BUSINESS_NAME = "MAWOLANGALAN BITES";
 // ==========================================
 
 export default function CheckoutPage() {
@@ -106,6 +106,14 @@ export default function CheckoutPage() {
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
       
+      // Format phone number to 2547XXXXXXXX (Safaricom requirement)
+      let mpesaPhone = formData.phone.replace(/\s+/g, '');
+      if (mpesaPhone.startsWith('0')) {
+        mpesaPhone = '254' + mpesaPhone.substring(1);
+      } else if (mpesaPhone.startsWith('+254')) {
+        mpesaPhone = mpesaPhone.substring(1); // remove +
+      }
+
       const orderData = {
         fullName: formData.fullName,
         phone: formData.phone,
@@ -117,6 +125,32 @@ export default function CheckoutPage() {
         location: location
       };
 
+      // If M-Pesa STK Push is selected, trigger the prompt first!
+      if (formData.paymentMethod === 'mpesa') {
+        toast.loading('Sending M-Pesa prompt to your phone...');
+        
+        try {
+          const stkResponse = await axios.post(`${API_URL}/payments/stkpush`, {
+            phoneNumber: mpesaPhone,
+            amount: orderData.total
+          });
+
+          if (stkResponse.data.ResponseCode === "0") {
+            toast.success('Check your phone and enter your M-Pesa PIN!');
+          } else {
+            toast.error(stkResponse.data.errorMessage || 'Failed to send prompt. Please try again.');
+            setLoading(false);
+            return; // Stop execution if STK push fails
+          }
+        } catch (stkError) {
+          console.error("STK Push failed:", stkError);
+          toast.error('Could not send M-Pesa prompt. Please check your number.');
+          setLoading(false);
+          return; // Stop execution if STK push fails
+        }
+      }
+
+      // Save the order to our database
       await axios.post(`${API_URL}/orders`, orderData);
       
       // Track successful purchase

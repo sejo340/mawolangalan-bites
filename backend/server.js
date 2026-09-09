@@ -29,7 +29,7 @@ mongoose.connect(MONGODB_URI, {
   console.log('✅ MongoDB Connected: ' + mongoose.connection.host);
 })
 .catch((err) => {
-  console.error(' Error: ' + err.message);
+  console.error('❌ Error: ' + err.message);
   process.exit(1);
 });
 
@@ -60,6 +60,14 @@ try {
   app.use('/api/contact', contactRoutes);
 } catch (error) {
   console.log('⚠️  Contact routes not loaded:', error.message);
+}
+
+// NEW: Payment Routes (M-Pesa STK Push)
+try {
+  const paymentRoutes = require('./routes/paymentRoutes');
+  app.use('/api/payments', paymentRoutes);
+} catch (error) {
+  console.log('⚠️  Payment routes not loaded:', error.message);
 }
 
 // Error Handling Middleware
