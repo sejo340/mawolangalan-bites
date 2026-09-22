@@ -25,28 +25,27 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Quick Links Section - FIXED HERE */}
+          {/* Quick Links Section - ✅ STEP B: Added grid for side-by-side mobile layout */}
           <div>
             <h3 className="text-lg font-bold mb-4 text-brand-green">Quick Links</h3>
-            <ul className="space-y-2 text-gray-300">
+            <ul className="space-y-2 text-gray-300 grid grid-cols-2 gap-x-4 gap-y-2">
               <li>
-                <Link href="/" className="hover:text-brand-green transition hover:pl-1 duration-200">Home</Link>
+                <Link href="/" className="hover:text-brand-green transition hover:pl-1 duration-200 text-sm">Home</Link>
               </li>
               <li>
-                {/* ✅ CHANGED FROM "COOKIES" TO "PRODUCTS" */}
-                <Link href="/products" className="hover:text-brand-green transition hover:pl-1 duration-200">Products</Link>
+                <Link href="/products" className="hover:text-brand-green transition hover:pl-1 duration-200 text-sm">Products</Link>
               </li>
               <li>
-                <Link href="/custom-cakes" className="hover:text-brand-green transition hover:pl-1 duration-200">Custom Cakes</Link>
+                <Link href="/custom-cakes" className="hover:text-brand-green transition hover:pl-1 duration-200 text-sm">Custom Cakes</Link>
               </li>
               <li>
-                <Link href="/about" className="hover:text-brand-green transition hover:pl-1 duration-200">About Us</Link>
+                <Link href="/about" className="hover:text-brand-green transition hover:pl-1 duration-200 text-sm">About Us</Link>
               </li>
               <li>
-                <Link href="/contact" className="hover:text-brand-green transition hover:pl-1 duration-200">Contact</Link>
+                <Link href="/contact" className="hover:text-brand-green transition hover:pl-1 duration-200 text-sm">Contact</Link>
               </li>
               <li>
-                <Link href="/cart" className="hover:text-brand-green transition hover:pl-1 duration-200">My Cart</Link>
+                <Link href="/cart" className="hover:text-brand-green transition hover:pl-1 duration-200 text-sm">My Cart</Link>
               </li>
             </ul>
           </div>
