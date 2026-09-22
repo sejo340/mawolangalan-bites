@@ -9,8 +9,8 @@ import { trackEvent } from '@/utils/analytics';
 // ==========================================
 // CLIENT PAYMENT DETAILS (UPDATE THESE!)
 // ==========================================
-const CLIENT_TILL_NUMBER = "1696232";
-const CLIENT_BUSINESS_NAME = "MAWOLANGALAN BITES";
+const CLIENT_TILL_NUMBER = "1696232"; 
+const CLIENT_BUSINESS_NAME = "MAWOLANGALAN BITES"; 
 // ==========================================
 
 export default function CheckoutPage() {
@@ -127,7 +127,7 @@ export default function CheckoutPage() {
 
       // If M-Pesa STK Push is selected, trigger the prompt first!
       if (formData.paymentMethod === 'mpesa') {
-        toast.loading('Sending M-Pesa prompt to your phone...');
+        const loadingToast = toast.loading('Sending M-Pesa prompt to your phone...');
         
         try {
           const stkResponse = await axios.post(`${API_URL}/payments/stkpush`, {
@@ -136,15 +136,15 @@ export default function CheckoutPage() {
           });
 
           if (stkResponse.data.ResponseCode === "0") {
-            toast.success('Check your phone and enter your M-Pesa PIN!');
+            toast.success('Check your phone and enter your M-Pesa PIN!', { id: loadingToast });
           } else {
-            toast.error(stkResponse.data.errorMessage || 'Failed to send prompt. Please try again.');
+            toast.error(stkResponse.data.errorMessage || 'Failed to send prompt. Please try again.', { id: loadingToast });
             setLoading(false);
             return; // Stop execution if STK push fails
           }
         } catch (stkError) {
           console.error("STK Push failed:", stkError);
-          toast.error('Could not send M-Pesa prompt. Please check your number.');
+          toast.error('Could not send M-Pesa prompt. Please check your number.', { id: loadingToast });
           setLoading(false);
           return; // Stop execution if STK push fails
         }
@@ -162,13 +162,14 @@ export default function CheckoutPage() {
       });
 
       setLastOrder(orderData);
-      clearCart();
+      clearCart(); // ✅ ONLY clear cart AFTER successful save
       setOrderSuccess(true);
-      toast.success('Order saved successfully!');
+      toast.success('Order placed successfully!');
       
     } catch (error) {
       console.error("Order placement failed:", error);
       toast.error('Failed to place order. Please try again.');
+      // ❌ DON'T clear cart if there's an error - items will persist
     } finally {
       setLoading(false);
     }
@@ -203,6 +204,7 @@ export default function CheckoutPage() {
     window.open(whatsappUrl, '_blank');
   };
 
+  // SUCCESS SCREEN
   if (orderSuccess && lastOrder) {
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center px-4 text-center bg-brand-cream">
@@ -242,6 +244,7 @@ export default function CheckoutPage() {
     );
   }
 
+  // CHECKOUT FORM
   if (cartItems.length === 0 && !orderSuccess) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center px-4 text-center">
