@@ -59,7 +59,7 @@ try {
   const contactRoutes = require('./routes/contactRoutes');
   app.use('/api/contact', contactRoutes);
 } catch (error) {
-  console.log('️  Contact routes not loaded:', error.message);
+  console.log('⚠️  Contact routes not loaded:', error.message);
 }
 
 // Payment Routes (M-Pesa)
@@ -70,32 +70,36 @@ try {
   console.log('⚠️  Payment routes not loaded:', error.message);
 }
 
-// ✅ NEW: Dynamic Stats Endpoint
+// Dynamic Stats Endpoint
 app.get('/api/stats', async (req, res) => {
   try {
     const db = mongoose.connection.db;
-    
-    // Count total orders (Happy Customers) and total products
     const customerCount = await db.collection('orders').countDocuments();
     const productCount = await db.collection('products').countDocuments();
 
     res.status(200).json({
       success: true,
       stats: {
-        // Fallback to 500 and 50 if the database is brand new and empty
         customers: Math.max(500, customerCount), 
         products: Math.max(50, productCount),    
         fresh: "100%" 
       }
     });
   } catch (error) {
-    // Fallback data if database query fails
     res.status(200).json({
       success: true,
       stats: { customers: 500, products: 50, fresh: "100%" }
     });
   }
 });
+
+// ✅ NEW: Admin Routes (Login & Dashboard Data)
+try {
+  const adminRoutes = require('./routes/adminRoutes');
+  app.use('/api/admin', adminRoutes);
+} catch (error) {
+  console.log('⚠️  Admin routes not loaded:', error.message);
+}
 
 // Error Handling Middleware
 app.use((err, req, res, next) => {
