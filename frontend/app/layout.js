@@ -2,8 +2,14 @@ import './globals.css';
 import { CartProvider } from '@/components/CartContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import AIAssistant from '@/components/AIAssistant';
+import dynamic from 'next/dynamic';
 import { Toaster } from 'react-hot-toast';
+
+// ✅ Lazy load the AI Assistant to prevent it from slowing down the initial page load
+const AIAssistant = dynamic(() => import('@/components/AIAssistant'), { 
+  ssr: false,
+  loading: () => null 
+});
 
 export const metadata = {
   title: 'Mawolangalan Bites',
