@@ -43,7 +43,7 @@ try {
   const productRoutes = require('./routes/productRoutes');
   app.use('/api/products', productRoutes);
 } catch (error) {
-  console.log('⚠️  Product routes not loaded:', error.message);
+  console.log('️  Product routes not loaded:', error.message);
 }
 
 // Order Routes
@@ -93,12 +93,20 @@ app.get('/api/stats', async (req, res) => {
   }
 });
 
-// ✅ NEW: Admin Routes (Login & Dashboard Data)
+// Admin Routes (Login & Dashboard Data)
 try {
   const adminRoutes = require('./routes/adminRoutes');
   app.use('/api/admin', adminRoutes);
 } catch (error) {
   console.log('⚠️  Admin routes not loaded:', error.message);
+}
+
+// ✅ NEW: AI Chat Routes
+try {
+  const chatRoutes = require('./routes/chatRoutes');
+  app.use('/api/chat', chatRoutes);
+} catch (error) {
+  console.log('⚠️  Chat routes not loaded:', error.message);
 }
 
 // Error Handling Middleware
