@@ -3,14 +3,14 @@ import { useState } from 'react';
 import { useCart } from '@/components/CartContext';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { FaMapMarkerAlt, FaWhatsapp, FaCheckCircle, FaSpinner, FaMobileAlt } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaWhatsapp, FaCheckCircle, FaSpinner, FaMobileAlt, FaClock } from 'react-icons/fa';
 import { trackEvent } from '@/utils/analytics';
 
 // ==========================================
 // CLIENT PAYMENT DETAILS (UPDATE THESE!)
 // ==========================================
 const CLIENT_TILL_NUMBER = "1696232"; 
-const CLIENT_BUSINESS_NAME = "MAWOLANGALAN BITES"; 
+const CLIENT_BUSINESS_NAME = "MAWOLANGALAN BITES";
 // ==========================================
 
 export default function CheckoutPage() {
@@ -106,12 +106,11 @@ export default function CheckoutPage() {
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
       
-      // Format phone number to 2547XXXXXXXX (Safaricom requirement)
       let mpesaPhone = formData.phone.replace(/\s+/g, '');
       if (mpesaPhone.startsWith('0')) {
         mpesaPhone = '254' + mpesaPhone.substring(1);
       } else if (mpesaPhone.startsWith('+254')) {
-        mpesaPhone = mpesaPhone.substring(1); // remove +
+        mpesaPhone = mpesaPhone.substring(1);
       }
 
       const orderData = {
@@ -122,7 +121,8 @@ export default function CheckoutPage() {
         items: cartItems,
         total: cartTotal + deliveryFee,
         deliveryFee,
-        location: location
+        location: location,
+        paymentStatus: formData.paymentMethod === 'mpesa' ? 'Pending Verification' : 'Pending'
       };
 
       // If M-Pesa STK Push is selected, trigger the prompt first!
@@ -136,24 +136,23 @@ export default function CheckoutPage() {
           });
 
           if (stkResponse.data.ResponseCode === "0") {
-            toast.success('Check your phone and enter your M-Pesa PIN!', { id: loadingToast });
+            toast.success('Prompt sent! Check your phone and enter your PIN.', { id: loadingToast });
           } else {
             toast.error(stkResponse.data.errorMessage || 'Failed to send prompt. Please try again.', { id: loadingToast });
             setLoading(false);
-            return; // Stop execution if STK push fails
+            return; 
           }
         } catch (stkError) {
           console.error("STK Push failed:", stkError);
           toast.error('Could not send M-Pesa prompt. Please check your number.', { id: loadingToast });
           setLoading(false);
-          return; // Stop execution if STK push fails
+          return; 
         }
       }
 
       // Save the order to our database
       await axios.post(`${API_URL}/orders`, orderData);
       
-      // Track successful purchase
       trackEvent('purchase', {
         total: orderData.total,
         items_count: cartItems.length,
@@ -162,14 +161,13 @@ export default function CheckoutPage() {
       });
 
       setLastOrder(orderData);
-      clearCart(); // ✅ ONLY clear cart AFTER successful save
+      clearCart(); 
       setOrderSuccess(true);
-      toast.success('Order placed successfully!');
+      toast.success('Order received successfully!');
       
     } catch (error) {
       console.error("Order placement failed:", error);
       toast.error('Failed to place order. Please try again.');
-      // ❌ DON'T clear cart if there's an error - items will persist
     } finally {
       setLoading(false);
     }
@@ -185,9 +183,10 @@ export default function CheckoutPage() {
     ).join('%0A');
     
     const subtotal = lastOrder.total - lastOrder.deliveryFee;
+    const payStatus = lastOrder.paymentStatus || 'Pending';
 
     let paymentText = 'Cash on Delivery';
-    if (lastOrder.paymentMethod === 'mpesa') paymentText = 'M-Pesa (STK Push)';
+    if (lastOrder.paymentMethod === 'mpesa') paymentText = `M-Pesa STK Push (${payStatus})`;
     if (lastOrder.paymentMethod === 'till') paymentText = `M-Pesa Till (${CLIENT_TILL_NUMBER})`;
 
     const message = `*NEW ORDER FROM WEBSITE* %0A%0A` +
@@ -198,21 +197,39 @@ export default function CheckoutPage() {
       `*Subtotal:* KES ${subtotal}%0A` +
       `*Delivery Fee:* KES ${lastOrder.deliveryFee}%0A` +
       `*TOTAL:* KES ${lastOrder.total}%0A%0A` +
-      `*Payment Method:* ${paymentText}`;
+      `*Payment Method:* ${paymentText}%0A` +
+      `*Status:* ⏳ ${payStatus}`;
 
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
     window.open(whatsappUrl, '_blank');
   };
 
-  // SUCCESS SCREEN
+  // ✅ SUCCESS SCREEN WITH SMARTER M-PESA MESSAGING
   if (orderSuccess && lastOrder) {
+    const isMpesa = lastOrder.paymentMethod === 'mpesa';
+    
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center px-4 text-center bg-brand-cream">
         <FaCheckCircle className="text-6xl text-brand-green mb-6" />
-        <h1 className="text-3xl md:text-4xl font-bold text-brand-brown mb-4">Order Placed Successfully!</h1>
-        <p className="text-gray-600 mb-6 max-w-md">
-          Thank you, {lastOrder.fullName}! To confirm your delivery and track your order, please send the details below to our WhatsApp.
-        </p>
+        <h1 className="text-3xl md:text-4xl font-bold text-brand-brown mb-4">Order Received!</h1>
+        
+        {isMpesa ? (
+          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 max-w-md text-left rounded-r-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <FaClock className="text-yellow-600" />
+              <h3 className="font-bold text-yellow-800">Action Required</h3>
+            </div>
+            <p className="text-sm text-yellow-700">
+              Please check your phone and enter your M-Pesa PIN to complete the payment. 
+              <br/><br/>
+              <strong>Note:</strong> The Safaricom testing environment can take 15-30 seconds to send the prompt. Once paid, we will verify and confirm your order shortly!
+            </p>
+          </div>
+        ) : (
+          <p className="text-gray-600 mb-6 max-w-md">
+            Thank you, {lastOrder.fullName}! To confirm your delivery, please send the details below to our WhatsApp.
+          </p>
+        )}
         
         <div className="bg-white p-6 rounded-xl shadow-md mb-6 max-w-md w-full text-left">
           <h3 className="font-bold text-brand-brown mb-3 border-b pb-2">Order Summary:</h3>
@@ -244,7 +261,6 @@ export default function CheckoutPage() {
     );
   }
 
-  // CHECKOUT FORM
   if (cartItems.length === 0 && !orderSuccess) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center px-4 text-center">
@@ -320,9 +336,7 @@ export default function CheckoutPage() {
                       <p className="font-bold text-brand-brown">Lipa Na M-Pesa</p>
                     </div>
                     <p className="text-sm text-gray-700 mb-1">Buy Goods and Services</p>
-                    
                     <p className="text-2xl font-bold text-brand-green my-2 tracking-wider">Till Number: {CLIENT_TILL_NUMBER}</p>
-                    
                     <p className="text-xs text-gray-500">Business Name: {CLIENT_BUSINESS_NAME}</p>
                   </div>
                 )}
