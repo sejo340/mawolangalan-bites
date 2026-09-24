@@ -16,7 +16,7 @@ export default function Footer() {
               MAWOLANGALAN <span className="text-brand-green">BITES</span>
             </h2>
             <p className="text-gray-300 text-sm leading-relaxed mb-4">
-              Crafting delicious memories one bite at a time. Artisan cookies, custom cakes, and premium baked goods made with love in Kenya.
+              Crafting delicious memories one bite at a time. Artisan cookies, custom cakes, and premium baked goods made with love in Kitui.
             </p>
             <div className="flex space-x-4">
               <a href="#" className="text-gray-300 hover:text-brand-green transition text-xl"><FaFacebook /></a>
@@ -25,7 +25,7 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Quick Links Section - ✅ STEP B: Added grid for side-by-side mobile layout */}
+          {/* Quick Links Section */}
           <div>
             <h3 className="text-lg font-bold mb-4 text-brand-green">Quick Links</h3>
             <ul className="space-y-2 text-gray-300 grid grid-cols-2 gap-x-4 gap-y-2">
@@ -50,13 +50,13 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Contact Info */}
+          {/* Contact Info - ✅ UPDATED TO KITUI */}
           <div>
             <h3 className="text-lg font-bold mb-4 text-brand-green">Contact Us</h3>
             <ul className="space-y-3 text-gray-300">
               <li className="flex items-start gap-3">
                 <FaMapMarkerAlt className="text-brand-green mt-1 flex-shrink-0" />
-                <span className="text-sm">Nairobi, Kenya</span>
+                <span className="text-sm">Kitui, Kenya</span>
               </li>
               <li className="flex items-start gap-3">
                 <FaPhone className="text-brand-green mt-1 flex-shrink-0" />
@@ -93,6 +93,9 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="border-t border-gray-700 pt-6 text-center text-sm text-gray-400">
           <p>&copy; {currentYear} Mawolangalan Bites. All rights reserved.</p>
+          <Link href="/admin/login" className="text-gray-600 hover:text-brand-green transition text-xs mt-2 inline-block">
+            Admin Login
+          </Link>
         </div>
       </div>
     </footer>

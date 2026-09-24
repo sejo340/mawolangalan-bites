@@ -10,7 +10,7 @@ import { trackEvent } from '@/utils/analytics';
 // CLIENT PAYMENT DETAILS (UPDATE THESE!)
 // ==========================================
 const CLIENT_TILL_NUMBER = "1696232"; 
-const CLIENT_BUSINESS_NAME = "MAWOLANGALAN BITES";
+const CLIENT_BUSINESS_NAME = "MAWOLANGALAN BITES"; 
 // ==========================================
 
 export default function CheckoutPage() {
@@ -40,10 +40,17 @@ export default function CheckoutPage() {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
-        const bakeryLat = -1.2921;
-        const bakeryLng = 36.8219;
+        
+        // ✅ UPDATED: Kitui Coordinates
+        const bakeryLat = -1.3667; 
+        const bakeryLng = 38.0167; 
+        
         const distance = calculateDistance(latitude, longitude, bakeryLat, bakeryLng);
-        const fee = Math.max(100, Math.ceil(distance) * 50); 
+        
+        // ✅ UPDATED: Delivery Fee Calculation (Max 300 KES)
+        // Base fee 100 KES + 20 KES per km, capped at 300 KES
+        let calculatedFee = 100 + (Math.ceil(distance) * 20);
+        const fee = Math.min(300, calculatedFee); 
         
         setLocation({ lat: latitude, lng: longitude, distance: distance.toFixed(2) });
         setDeliveryFee(fee);
@@ -59,7 +66,7 @@ export default function CheckoutPage() {
             const readableAddress = [
               addr.road,
               addr.suburb || addr.neighbourhood || addr.hamlet,
-              addr.city || addr.town || addr.county || 'Nairobi'
+              addr.city || addr.town || addr.county || 'Kitui'
             ].filter(Boolean).join(', ');
             
             setFormData(prev => ({ ...prev, address: readableAddress }));
@@ -125,7 +132,6 @@ export default function CheckoutPage() {
         paymentStatus: formData.paymentMethod === 'mpesa' ? 'Pending Verification' : 'Pending'
       };
 
-      // If M-Pesa STK Push is selected, trigger the prompt first!
       if (formData.paymentMethod === 'mpesa') {
         const loadingToast = toast.loading('Sending M-Pesa prompt to your phone...');
         
@@ -150,7 +156,6 @@ export default function CheckoutPage() {
         }
       }
 
-      // Save the order to our database
       await axios.post(`${API_URL}/orders`, orderData);
       
       trackEvent('purchase', {
@@ -204,7 +209,6 @@ export default function CheckoutPage() {
     window.open(whatsappUrl, '_blank');
   };
 
-  // ✅ SUCCESS SCREEN WITH SMARTER M-PESA MESSAGING
   if (orderSuccess && lastOrder) {
     const isMpesa = lastOrder.paymentMethod === 'mpesa';
     
@@ -292,7 +296,7 @@ export default function CheckoutPage() {
               <label className="block text-sm font-semibold text-brand-brown mb-2">Delivery Address *</label>
               <textarea 
                 required 
-                placeholder="e.g., Kasarani Stadium, near the main gate"
+                placeholder="e.g., Near Kitui Main Market"
                 value={formData.address} 
                 onChange={(e) => setFormData({...formData, address: e.target.value})} 
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent" 
