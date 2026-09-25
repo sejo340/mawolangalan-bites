@@ -26,8 +26,8 @@ router.post('/', async (req, res) => {
   try {
     const { message } = req.body;
 
-    // ✅ FIXED: Using gemini-2.0-flash (current model as of 2026)
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    // ✅ THE FIX: Using "-latest" ensures we always hit the active model and avoid 404 errors
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
     const chat = model.startChat({
       generationConfig: {
