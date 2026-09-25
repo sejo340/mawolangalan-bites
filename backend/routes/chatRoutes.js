@@ -26,8 +26,8 @@ router.post('/', async (req, res) => {
   try {
     const { message } = req.body;
 
-    // Use the fast and free Gemini 1.5 Flash model
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // ✅ FIXED: Changed to "gemini-1.5-flash-latest" to prevent the 404 Not Found error
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
     const chat = model.startChat({
       generationConfig: {
@@ -42,7 +42,7 @@ router.post('/', async (req, res) => {
 
     res.json({ reply: text });
   } catch (error) {
-    console.error("AI Error:", error);
+    console.error("AI Error:", error.message);
     res.status(500).json({ reply: "I'm sorry, I'm having a little trouble connecting right now. Please try again in a moment!" });
   }
 });
