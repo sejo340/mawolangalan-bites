@@ -26,8 +26,8 @@ router.post('/', async (req, res) => {
   try {
     const { message } = req.body;
 
-    // Use the standard model name
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // ✅ FIXED: Using gemini-2.0-flash (current model as of 2026)
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
     const chat = model.startChat({
       generationConfig: {
@@ -35,6 +35,7 @@ router.post('/', async (req, res) => {
       },
     });
 
+    // Combine system prompt and user message
     const result = await chat.sendMessage(SYSTEM_PROMPT + "\n\nUser Question: " + message);
     const response = await result.response;
     const text = response.text();
@@ -42,8 +43,7 @@ router.post('/', async (req, res) => {
     res.json({ reply: text });
   } catch (error) {
     console.error("AI Error:", error.message);
-    // ✅ DEBUG MODE: This will show the exact error in the chatbox so we can fix it!
-    res.status(500).json({ reply: "DEBUG ERROR: " + error.message }); 
+    res.status(500).json({ reply: "I'm sorry, I'm having a little trouble connecting right now. Please try again in a moment!" });
   }
 });
 
