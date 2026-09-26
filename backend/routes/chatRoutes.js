@@ -1,11 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const axios = require('axios'); // We use axios to talk directly to Google
 
-// Initialize Google AI using the key from Render
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-// The "System Prompt" - This tells the AI who it is and how to behave
 const SYSTEM_PROMPT = `
 You are the friendly and helpful AI customer support assistant for "Mawolangalan Bites", an artisan bakery located in Kitui, Kenya.
 
@@ -25,25 +21,34 @@ If you don't know the answer to a specific question, politely suggest they conta
 router.post('/', async (req, res) => {
   try {
     const { message } = req.body;
+    const apiKey = process.env.GEMINI_API_KEY;
 
-    // ✅ THE FIX: Using "-latest" ensures we always hit the active model and avoid 404 errors
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+    if (!apiKey) {
+      return res.status(500).json({ reply: "DEBUG: API Key is missing in Render." });
+    }
 
-    const chat = model.startChat({
-      generationConfig: {
-        maxOutputTokens: 1000,
-      },
-    });
+    // ✅ BULLETPROOF FIX: We call the API directly using the exact correct model name
+    const model = "gemini-1.5-flash-latest";
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
-    // Combine system prompt and user message
-    const result = await chat.sendMessage(SYSTEM_PROMPT + "\n\nUser Question: " + message);
-    const response = await result.response;
-    const text = response.text();
+    const payload = {
+      contents: [
+        {
+          parts: [{ text: SYSTEM_PROMPT + "\n\nUser Question: " + message }]
+        }
+      ]
+    };
+
+    console.log("🤖 Sending request to Google AI...");
+    const response = await axios.post(url, payload);
+    
+    // Extract the text from Google's response
+    const text = response.data.candidates[0].content.parts[0].text;
 
     res.json({ reply: text });
   } catch (error) {
-    console.error("AI Error:", error.message);
-    res.status(500).json({ reply: "I'm sorry, I'm having a little trouble connecting right now. Please try again in a moment!" });
+    console.error("AI Error:", error.response?.data || error.message);
+    res.status(500).json({ reply: "DEBUG: " + (error.response?.data?.error?.message || error.message) });
   }
 });
 
