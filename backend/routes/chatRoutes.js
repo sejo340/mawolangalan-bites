@@ -24,31 +24,39 @@ router.post('/', async (req, res) => {
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
-      return res.status(500).json({ reply: "DEBUG: API Key is missing in Render." });
+      return res.status(500).json({ reply: "API Key is missing." });
     }
 
-    // ✅ THE FINAL FIX: Google told us to use gemini-3.8-flash!
-    const model = "gemini-3.8-flash";
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-
     const payload = {
-      contents: [
-        {
-          parts: [{ text: SYSTEM_PROMPT + "\n\nUser Question: " + message }]
-        }
-      ]
+      contents: [{ parts: [{ text: SYSTEM_PROMPT + "\n\nUser Question: " + message }] }]
     };
 
-    console.log(`🤖 Sending request to Google AI using model: ${model}`);
-    const response = await axios.post(url, payload);
-    
-    // Extract the text from Google's response
-    const text = response.data.candidates[0].content.parts[0].text;
+    // Try primary model first, fallback to alternative if busy
+    const models = ["gemini-3.8-flash", "gemini-2.0-flash-lite", "gemini-1.5-flash"];
+    let reply = null;
 
-    res.json({ reply: text });
+    for (const model of models) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        console.log(`🤖 Trying model: ${model}`);
+        const response = await axios.post(url, payload, { timeout: 10000 });
+        reply = response.data.candidates[0].content.parts[0].text;
+        break; // Success! Stop trying
+      } catch (error) {
+        console.log(`⚠️ Model ${model} failed: ${error.response?.data?.error?.message || 'timeout'}`);
+        continue; // Try next model
+      }
+    }
+
+    if (reply) {
+      res.json({ reply });
+    } else {
+      res.status(503).json({ reply: "I'm temporarily busy. Please try again in a minute! 🙏" });
+    }
+
   } catch (error) {
-    console.error("AI Error:", error.response?.data || error.message);
-    res.status(500).json({ reply: "DEBUG: " + (error.response?.data?.error?.message || error.message) });
+    console.error("AI Error:", error.message);
+    res.status(500).json({ reply: "I'm having trouble connecting. Please try again!" });
   }
 });
 
