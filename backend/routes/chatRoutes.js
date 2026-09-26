@@ -31,27 +31,30 @@ router.post('/', async (req, res) => {
       contents: [{ parts: [{ text: SYSTEM_PROMPT + "\n\nUser Question: " + message }] }]
     };
 
-    // Try primary model first, fallback to alternative if busy
-    const models = ["gemini-3.8-flash", "gemini-2.0-flash-lite", "gemini-1.5-flash"];
+    // ✅ UPDATED: Try the "Lite" model first (it's faster and rarely gets busy), then fallback to the others
+    const models = ["gemini-2.0-flash-lite", "gemini-3.8-flash", "gemini-2.0-flash"];
     let reply = null;
 
     for (const model of models) {
       try {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
         console.log(`🤖 Trying model: ${model}`);
-        const response = await axios.post(url, payload, { timeout: 10000 });
+        
+        // We added a timeout so it doesn't wait forever if a model is slow
+        const response = await axios.post(url, payload, { timeout: 15000 });
         reply = response.data.candidates[0].content.parts[0].text;
-        break; // Success! Stop trying
+        break; // Success! Stop trying other models.
       } catch (error) {
-        console.log(`⚠️ Model ${model} failed: ${error.response?.data?.error?.message || 'timeout'}`);
-        continue; // Try next model
+        console.log(`⚠️ Model ${model} failed or busy. Trying next...`);
+        continue; // Try the next model in the list.
       }
     }
 
     if (reply) {
       res.json({ reply });
     } else {
-      res.status(503).json({ reply: "I'm temporarily busy. Please try again in a minute! 🙏" });
+      // Friendly message if all models are busy
+      res.status(503).json({ reply: "I'm a bit overwhelmed right now! Please wait 10 seconds and try again. 🙏" });
     }
 
   } catch (error) {
