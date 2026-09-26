@@ -27,8 +27,8 @@ router.post('/', async (req, res) => {
       return res.status(500).json({ reply: "DEBUG: API Key is missing in Render." });
     }
 
-    // ✅ THE FINAL FIX: Using gemini-2.0-flash on the v1beta endpoint
-    const model = "gemini-2.0-flash";
+    // ✅ THE FINAL FIX: Google told us to use gemini-3.8-flash!
+    const model = "gemini-3.8-flash";
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
     const payload = {
@@ -39,7 +39,7 @@ router.post('/', async (req, res) => {
       ]
     };
 
-    console.log(` Sending request to Google AI using model: ${model}`);
+    console.log(`🤖 Sending request to Google AI using model: ${model}`);
     const response = await axios.post(url, payload);
     
     // Extract the text from Google's response
