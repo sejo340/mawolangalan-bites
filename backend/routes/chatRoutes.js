@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const axios = require('axios'); // We use axios to talk directly to Google
+const axios = require('axios');
 
 const SYSTEM_PROMPT = `
 You are the friendly and helpful AI customer support assistant for "Mawolangalan Bites", an artisan bakery located in Kitui, Kenya.
@@ -27,9 +27,10 @@ router.post('/', async (req, res) => {
       return res.status(500).json({ reply: "DEBUG: API Key is missing in Render." });
     }
 
-    // ✅ BULLETPROOF FIX: We call the API directly using the exact correct model name
-    const model = "gemini-1.5-flash-latest";
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    // ✅ THE FIX: Changed URL from v1beta to v1 (Stable Production API)
+    // ✅ Using the standard model name 'gemini-1.5-flash' which lives in v1
+    const model = "gemini-1.5-flash";
+    const url = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`;
 
     const payload = {
       contents: [
@@ -39,7 +40,7 @@ router.post('/', async (req, res) => {
       ]
     };
 
-    console.log("🤖 Sending request to Google AI...");
+    console.log("🤖 Sending request to Google AI (v1)...");
     const response = await axios.post(url, payload);
     
     // Extract the text from Google's response
