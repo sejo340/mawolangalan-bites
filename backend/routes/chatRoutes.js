@@ -18,6 +18,9 @@ RULES:
 If you don't know the answer to a specific question, politely suggest they contact the business directly via WhatsApp at +254 784 437 428.
 `;
 
+// Helper function to sleep
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 router.post('/', async (req, res) => {
   try {
     const { message } = req.body;
@@ -31,30 +34,49 @@ router.post('/', async (req, res) => {
       contents: [{ parts: [{ text: SYSTEM_PROMPT + "\n\nUser Question: " + message }] }]
     };
 
-    // ✅ UPDATED: Try the "Lite" model first (it's faster and rarely gets busy), then fallback to the others
+    // ✅ UPDATED: Use 'lite' model first (it's the fastest and has the highest limits)
+    // Fallback to the newer models if needed.
     const models = ["gemini-2.0-flash-lite", "gemini-3.8-flash", "gemini-2.0-flash"];
     let reply = null;
 
     for (const model of models) {
-      try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-        console.log(`🤖 Trying model: ${model}`);
-        
-        // We added a timeout so it doesn't wait forever if a model is slow
-        const response = await axios.post(url, payload, { timeout: 15000 });
-        reply = response.data.candidates[0].content.parts[0].text;
-        break; // Success! Stop trying other models.
-      } catch (error) {
-        console.log(`⚠️ Model ${model} failed or busy. Trying next...`);
-        continue; // Try the next model in the list.
+      let attempts = 0;
+      const maxAttempts = 3; // Retry up to 3 times if busy
+
+      while (!reply && attempts < maxAttempts) {
+        try {
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+          
+          // 10 second timeout to prevent hanging
+          const response = await axios.post(url, payload, { timeout: 10000 });
+          reply = response.data.candidates[0].content.parts[0].text;
+          break; // Success! Stop trying.
+          
+        } catch (error) {
+          const status = error.response?.status;
+          const errorMsg = error.response?.data?.error?.message || "";
+          
+          // ✅ SMART RETRY: If Google says "high demand" (429) or "unavailable" (503), wait and retry
+          if ((status === 429 || status === 503) && attempts < maxAttempts - 1) {
+            attempts++;
+            console.log(`⏳ Model ${model} is busy. Retrying in 1.5s... (Attempt ${attempts})`);
+            await sleep(1500); // Wait 1.5 seconds silently
+          } else {
+            // It's a different error (like model not found), stop trying this model
+            console.log(`⚠️ Model ${model} failed: ${errorMsg}`);
+            break; 
+          }
+        }
       }
+      
+      if (reply) break; // If we got a reply from any model, stop the loop
     }
 
     if (reply) {
       res.json({ reply });
     } else {
-      // Friendly message if all models are busy
-      res.status(503).json({ reply: "I'm a bit overwhelmed right now! Please wait 10 seconds and try again. 🙏" });
+      // Only show this if ALL models and ALL retries failed
+      res.status(503).json({ reply: "I'm having a slight connection issue. Please try again in a moment! 🙏" });
     }
 
   } catch (error) {
