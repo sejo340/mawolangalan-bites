@@ -48,6 +48,24 @@ export default function RootLayout({ children }) {
           <Footer />
           <AIAssistant />
           <Toaster position="top-center" />
+          
+          {/* AI Web Agent Chat Widget for Mawolangalan Bites */}
+          <iframe 
+            src="https://ai-web-agent-saas.onrender.com/widget.html?api_key=sk-saas-53df718ebba1455ab30a34e00e67535f"
+            style={{
+              position: 'fixed', 
+              bottom: 0, 
+              right: 0, 
+              width: '400px', 
+              height: '600px', 
+              border: 'none', 
+              background: 'transparent', 
+              zIndex: 999999, 
+              pointerEvents: 'auto'
+            }}
+            title="AI Chat Assistant"
+          ></iframe>
+          
         </CartProvider>
       </body>
     </html>
