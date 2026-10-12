@@ -2,14 +2,9 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { FaShoppingCart, FaBars, FaTimes } from 'react-icons/fa';
-import { useCart } from '@/components/CartContext';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const { cartItems } = useCart();
-
-  // Calculate total items in cart
-  const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
 
   return (
     <nav className="bg-brand-cream shadow-md sticky top-0 z-40">
@@ -28,14 +23,9 @@ export default function Navbar() {
           <Link href="/about" className="text-brand-brown hover:text-brand-green font-semibold transition">About</Link>
           <Link href="/contact" className="text-brand-brown hover:text-brand-green font-semibold transition">Contact</Link>
           
-          {/* Cart Button */}
+          {/* Simple Cart Button (No logic for now) */}
           <Link href="/cart" className="relative text-brand-brown hover:text-brand-green transition">
             <FaShoppingCart className="text-2xl" />
-            {cartCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-brand-green text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                {cartCount}
-              </span>
-            )}
           </Link>
         </div>
 
@@ -58,7 +48,7 @@ export default function Navbar() {
             <Link href="/about" className="text-brand-brown hover:text-brand-green font-semibold" onClick={() => setIsOpen(false)}>About</Link>
             <Link href="/contact" className="text-brand-brown hover:text-brand-green font-semibold" onClick={() => setIsOpen(false)}>Contact</Link>
             <Link href="/cart" className="text-brand-brown hover:text-brand-green font-semibold flex items-center gap-2" onClick={() => setIsOpen(false)}>
-              <FaShoppingCart /> Cart {cartCount > 0 && `(${cartCount})`}
+              <FaShoppingCart /> Cart
             </Link>
           </div>
         </div>
